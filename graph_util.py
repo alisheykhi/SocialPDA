@@ -1,12 +1,15 @@
-import re,snap,collections, operator,os
+import re,collections,operator
+import networkx as nx
+from privacy_level import privacy_level_generator
 
 
 class ReadGraph():
     extension = []
-    G1 = snap.TUNGraph.New()
+    G = nx.Graph()
     stuff = {}
     nodes = []
     edges = []
+    privacy_level = []
     sorted_degree_sequence = []
 
     def __init__(self, file_name):
@@ -63,35 +66,39 @@ class ReadGraph():
         :return:
         '''
 
-        file_path = "DataSet/"+self.file_name
-        ifile = open(file_path,'r')
-        text = ifile.read()
-        ifile.close()
-        if text:
-            print "reading gml file ... "
-            pattern_meas = re.compile(r"source\s(\d+)\s+target\s(\d+)", re.VERBOSE | re.MULTILINE)
-            pattern_id = re.compile(r"id\s(\d+)", re.VERBOSE | re.MULTILINE)
-            for match in pattern_meas.finditer(text):
-                ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
-            for match in pattern_id.finditer(text):
-                ReadGraph.nodes.append("%s" % match.group(1))
-            node_count = 0
-            for node in ReadGraph.nodes:
-                ReadGraph.G1.AddNode(int(node))
-                node_count += 1
-            for edge in ReadGraph.edges:
-                ReadGraph.G1.AddEdge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
+        try:
+            file_path = "DataSet/"+self.file_name
+            ifile = open(file_path,'r')
+        except:
+            print "can't open "+self.file_name
+        else:
+            text = ifile.read()
+            ifile.close()
+            if text:
+                print "reading gml file ... "
+                pattern_meas = re.compile(r"source\s(\d+)\s+target\s(\d+)", re.VERBOSE | re.MULTILINE)
+                pattern_id = re.compile(r"id\s(\d+)", re.VERBOSE | re.MULTILINE)
+                for match in pattern_meas.finditer(text):
+                    ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
+                for match in pattern_id.finditer(text):
+                    ReadGraph.nodes.append("%s" % match.group(1))
+                node_count = 0
+                for node in ReadGraph.nodes:
+                    ReadGraph.G.add_node(int(node))
+                    node_count += 1
+                for edge in ReadGraph.edges:
+                    ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
 
-            sum = 0
-            count = 0
-            for NI in ReadGraph.G1.Nodes():
-                #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
-                sum += NI.GetInDeg()
-                count+=1
+                sum = 0
+                count = 0
+                for NI in ReadGraph.G.degree().values():
+                    #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
+                    sum += NI
+                    count+=1
 
-            ReadGraph.stuff['edge_count'] = sum/2
+                ReadGraph.stuff['edge_count'] = sum/2
 
-            self.degree_sequence()
+                self.degree_sequence()
 
 
     def txt_to_graph(self):
@@ -99,62 +106,81 @@ class ReadGraph():
         convert txt graph to TNUGraph
         :return:
         """
-        file_path = "DataSet/"+self.file_name
-        ifile = open(file_path,'r')
-        text = ifile.read()
-        ifile.close()
-        if text:
-            print "reading txt file ... "
-            nodes_list = []
 
-            if self.file_name.split(".")[0] == 'caida':
-                pattern_meas = re.compile(r"^(\d+)\s+(\d+)\s+([-]?\d+)$", re.VERBOSE | re.MULTILINE)
-            if self.file_name.split(".")[0] == 'amazon':
-                pattern_meas = re.compile(r"^(\d+)\s+(\d+)", re.VERBOSE | re.MULTILINE)
-            for match in pattern_meas.finditer(text):
-                nodes_list.append("%s" % int(match.group(1)))
-                nodes_list.append("%s" % int(match.group(2)))
+        try:
+            file_path = "DataSet/"+self.file_name
+            ifile = open(file_path ,'r')
+        except:
+            print "can't open "+self.file_name
+        else:
 
-                ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
+            text = ifile.read()
+            ifile.close()
+            if text:
+                print "reading txt file ... "
+                nodes_list = []
 
-            ReadGraph.nodes = list(set(nodes_list))
-            print len (ReadGraph.nodes)
+                if self.file_name.split(".")[0] == 'caida':
+                    pattern_meas = re.compile(r"^(\d+)\s+(\d+)\s+([-]?\d+)$", re.VERBOSE | re.MULTILINE)
+                if self.file_name.split(".")[0] == 'amazon':
+                    pattern_meas = re.compile(r"^(\d+)\s+(\d+)", re.VERBOSE | re.MULTILINE)
+                for match in pattern_meas.finditer(text):
+                    nodes_list.append("%s" % int(match.group(1)))
+                    nodes_list.append("%s" % int(match.group(2)))
 
-            for node in ReadGraph.nodes:
-                ReadGraph.G1.AddNode(int(node))
+                    ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
 
-            for edge in ReadGraph.edges:
-                ReadGraph.G1.AddEdge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
-            sum = 0
-            count = 0
-            for NI in ReadGraph.G1.Nodes():
-                #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
-                sum += NI.GetInDeg()
-                count+=1
-            ReadGraph.stuff['edge_count'] = sum/2
-            self.degree_sequence()
+                ReadGraph.nodes = list(set(nodes_list))
+                print len (ReadGraph.nodes)
+
+                for node in ReadGraph.nodes:
+                    ReadGraph.G.add_node(int(node))
+
+                for edge in ReadGraph.edges:
+                    ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
+                sum = 0
+                count = 0
+                for NI in ReadGraph.G.degree().values():
+                    #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
+                    sum += NI
+                    count+=1
+                ReadGraph.stuff['edge_count'] = sum/2
+                self.degree_sequence()
 
 
     def degree_sequence(self):
-        result_in_degree = snap.TIntV()
-        snap.GetDegSeqV(ReadGraph.G1, result_in_degree)
+        result_in_degree = ReadGraph.G.degree().values()
+        privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
+        privacy_level = privacy_level_generator(file_name=privacy_file_name)
 
-        for i in range(0, result_in_degree.Len()):
+        for i in range(0, len(result_in_degree)):
 
             if result_in_degree[i]:
-                current_node = {
-                    "degree" : result_in_degree[i],
-                    "id" : i,
-                }
+                current_node = dict(degree=result_in_degree[i], id=i, privacy_level=privacy_level[i])
                 ReadGraph.sorted_degree_sequence.append(current_node)
 
-        ReadGraph.sorted_degree_sequence.sort(reverse=True)
+        ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level' ],x['degree']), reverse=True)
         ReadGraph.stuff['node_count'] = len(ReadGraph.sorted_degree_sequence)
-        ReadGraph.stuff ['max_degree_id'] = ReadGraph.sorted_degree_sequence[0]['id']
-        ReadGraph.stuff ['max_degree_size'] = ReadGraph.sorted_degree_sequence[0]['degree']
-        ReadGraph.stuff ['avg_degree'] =   (float (ReadGraph.stuff ['edge_count'])/float (ReadGraph.stuff ['node_count']))
+        max_degree = None
+        max_degree_id = None
+        for node in ReadGraph.sorted_degree_sequence:
+            if node['degree'] > max_degree:
+                max_degree = node['degree']
+                max_degree_id = node['id']
+
+        print 'max degree :',max_degree,'max degree id :',max_degree_id
+        ReadGraph.stuff ['max_degree_id'] = max_degree_id
+        ReadGraph.stuff ['max_privacy'] = ReadGraph.sorted_degree_sequence[0]['privacy_level']
+        ReadGraph.stuff ['max_privacy_id'] = ReadGraph.sorted_degree_sequence[0]['id']
+        ReadGraph.stuff ['max_degree_size'] = max_degree
+        ReadGraph.stuff ['avg_degree'] =  2 * (float (ReadGraph.stuff ['edge_count'])/float (ReadGraph.stuff ['node_count']))
         node_occur = collections.Counter (result_in_degree)
         sorted_node_oc = sorted(node_occur.items(), key=operator.itemgetter(1))
         ReadGraph.stuff ['k'] = sorted_node_oc[0][1]
         print ReadGraph.stuff
+        print "for example, the first node in sorted degree sequence is :"
+        print ReadGraph.sorted_degree_sequence[0]
+
+
+
 
