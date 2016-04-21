@@ -2,17 +2,26 @@ import re,collections,operator
 import networkx as nx
 from privacy_level import privacy_level_generator
 
-
 class ReadGraph():
     extension = []
     G = nx.Graph()
-    stuff = {}
+    properties  = {}
     nodes = []
     edges = []
     privacy_level = []
     sorted_degree_sequence = []
 
     def __init__(self, file_name):
+        print "-----------------------------------------------------------"
+        print "___________________Developed for___________________________"
+        print "-----------------------------------------------------------"
+        print "title: SocialPDA: A Structure-Aware Approach for Personalized Degree Anonymity in Social Network Graphs"
+        print "Auther: Ali Sheykhi and Mahdi Abadi"
+        print "Faculty of Electrical and Computer Engineering, Tarbiat Modares University, Tehran, Iran"
+        print "{ali.sheykhi, abadi}@modares.ac.ir"
+        print "-----------------------------------------------------------"
+        print "___________________Initial Setup___________________________"
+        print "-----------------------------------------------------------"
         self.file_name = file_name
         print "file name : ",self.file_name
         ReadGraph.extension = ["csv", "txt", "gml", "net"]
@@ -96,7 +105,7 @@ class ReadGraph():
                     sum += NI
                     count+=1
 
-                ReadGraph.stuff['edge_count'] = sum/2
+                ReadGraph.properties ['edge_count'] = sum/2
 
                 self.degree_sequence()
 
@@ -131,7 +140,7 @@ class ReadGraph():
                     ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
 
                 ReadGraph.nodes = list(set(nodes_list))
-                print len (ReadGraph.nodes)
+
 
                 for node in ReadGraph.nodes:
                     ReadGraph.G.add_node(int(node))
@@ -144,8 +153,10 @@ class ReadGraph():
                     #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
                     sum += NI
                     count+=1
-                ReadGraph.stuff['edge_count'] = sum/2
+                ReadGraph.properties ['edge_count'] = sum/2
+
                 self.degree_sequence()
+
 
 
     def degree_sequence(self):
@@ -156,11 +167,11 @@ class ReadGraph():
         for i in range(0, len(result_in_degree)):
 
             if result_in_degree[i]:
-                current_node = dict(degree=result_in_degree[i], id=i, privacy_level=privacy_level[i])
+                current_node = dict(degree=result_in_degree[i], id=i, privacy_level=(int)(privacy_level[i]) * 2)
                 ReadGraph.sorted_degree_sequence.append(current_node)
 
         ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level' ],x['degree']), reverse=True)
-        ReadGraph.stuff['node_count'] = len(ReadGraph.sorted_degree_sequence)
+        ReadGraph.properties ['node_count'] = len(ReadGraph.sorted_degree_sequence)
         max_degree = None
         max_degree_id = None
         for node in ReadGraph.sorted_degree_sequence:
@@ -168,18 +179,17 @@ class ReadGraph():
                 max_degree = node['degree']
                 max_degree_id = node['id']
 
-        print 'max degree :',max_degree,'max degree id :',max_degree_id
-        ReadGraph.stuff ['max_degree_id'] = max_degree_id
-        ReadGraph.stuff ['max_privacy'] = ReadGraph.sorted_degree_sequence[0]['privacy_level']
-        ReadGraph.stuff ['max_privacy_id'] = ReadGraph.sorted_degree_sequence[0]['id']
-        ReadGraph.stuff ['max_degree_size'] = max_degree
-        ReadGraph.stuff ['avg_degree'] =  2 * (float (ReadGraph.stuff ['edge_count'])/float (ReadGraph.stuff ['node_count']))
+        ReadGraph.properties  ['max_degree_id'] = max_degree_id
+        ReadGraph.properties  ['max_privacy'] = ReadGraph.sorted_degree_sequence[0]['privacy_level']
+        ReadGraph.properties  ['max_privacy_id'] = ReadGraph.sorted_degree_sequence[0]['id']
+        ReadGraph.properties  ['max_degree_size'] = max_degree
+        ReadGraph.properties  ['avg_degree'] =  2 * (float (ReadGraph.properties  ['edge_count'])/float (ReadGraph.properties  ['node_count']))
         node_occur = collections.Counter (result_in_degree)
         sorted_node_oc = sorted(node_occur.items(), key=operator.itemgetter(1))
-        ReadGraph.stuff ['k'] = sorted_node_oc[0][1]
-        print ReadGraph.stuff
-        print "for example, the first node in sorted degree sequence is :"
-        print ReadGraph.sorted_degree_sequence[0]
+        ReadGraph.properties  ['k'] = sorted_node_oc[0][1]
+        print ReadGraph.properties 
+        print "for example, the first node in sorted degree sequence is :" + str(ReadGraph.sorted_degree_sequence[0])
+
 
 
 
