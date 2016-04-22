@@ -7,6 +7,7 @@ import networkx as nx
 class MicroPDA():
     g_phi = nx.DiGraph()
     shortest_path = []
+    omega_clusters = []
 
     def __init__(self, sorted_degree_sequence):
         print "-----------------------------------------------------------"
@@ -38,8 +39,23 @@ class MicroPDA():
         MicroPDA.shortest_path = nx.dijkstra_path(MicroPDA.g_phi,source=0,target=int(degree[-1]['index']))
         print "shortest path is:"
         print MicroPDA.shortest_path
+        print "number of Omega Clusters: " + str(len(MicroPDA.shortest_path)-1)
+        for index in range(0,len(MicroPDA.shortest_path)-1):
+            lb = int (MicroPDA.shortest_path[index])
+            ub = int (MicroPDA.shortest_path[index+1])
+            omega_cluster =[]
+            for item in range(lb+1,ub+1):
+                degree[item]['omega_cluster_index'] = index+1
+                omega_cluster.append(degree[item])
+            MicroPDA.omega_clusters.append(omega_cluster)
+        print "\nfist 10 omega cluster :"
+        for z in range(0,10):
+            print MicroPDA.omega_clusters[z]
+        print "\nlast 10 omega cluster: "
+        for z in range(len(MicroPDA.shortest_path)-11,len(MicroPDA.shortest_path)-1):
+            print MicroPDA.omega_clusters[z]
         print "-----------------------------------------------------------"
-        return MicroPDA.shortest_path
+
 
 
 
