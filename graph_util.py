@@ -16,7 +16,7 @@ class ReadGraph():
         print "___________________Developed for___________________________"
         print "-----------------------------------------------------------"
         print "title: SocialPDA: A Structure-Aware Approach for Personalized Degree Anonymity in Social Network Graphs"
-        print "Auther: Ali Sheykhi and Mahdi Abadi"
+        print "Author: Ali Sheykhi and Mahdi Abadi"
         print "Faculty of Electrical and Computer Engineering, Tarbiat Modares University, Tehran, Iran"
         print "{ali.sheykhi, abadi}@modares.ac.ir"
         print "-----------------------------------------------------------"

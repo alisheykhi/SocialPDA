@@ -1,9 +1,16 @@
-import math, random
+
+import math, random,sys
 
 class ParticlePDA():
-    changes_list =[]
+    differences =[]
     beta = 0
-
+    w = 0.729844 # Inertia weight to prevent velocities becoming too large
+    c1 = 1.496180 # Scaling co-efficient on the social component
+    c2 = 1.496180 # Scaling co-efficient on the cognitive component
+    dimension = 0 # Size of the problem
+    iterations = 20
+    swarmSize = 10
+    solution = []
 
     def __init__(self,omega_clusters,beta):
         print "____________________ParticlePDA____________________________"
@@ -12,32 +19,41 @@ class ParticlePDA():
         for cluster in omega_clusters:
             sum, count, avg ,index = 0 , 0 , 0 ,1
             for node in cluster:
-                sum += node['degree']
+                sum += int (node['degree'])
                 count +=1
             avg = float (sum)/count
-            ParticlePDA.changes_list.append((int (math.floor(avg) * count)-sum ,int (math.ceil(avg) * count)-sum ))
-        particle = [random.randrange(0, 2) for _ in range(0, len(omega_clusters))]
-        print (self.f3(particle))
+            floor, ceil = 0,0
+            for node in cluster:
+                floor += int (math.fabs(int (node['degree']) - math.floor(avg)))
+                ceil += int ( math.fabs(int (node['degree']) - math.ceil(avg)))
+            ParticlePDA.differences.append((floor,ceil))
+        ParticlePDA.dimension = len(ParticlePDA.differences)
+        print self.particel()['velocity']
+        #particleSwarmOptimizer = ParticleSwarmOptimizer(ParticlePDA.changes_list)
+        #particleSwarmOptimizer.optimize()
+        #print particleSwarmOptimizer.solution
 
-    def f3(self,particle):
-        return ((ParticlePDA.beta * self.f1(particle) )+((1-ParticlePDA.beta) * self.f2(particle)))
+    def particel (self):
+        particle = {}
+        velocity = []
+        pos = []
+        pBest = []
+        for i in range(0,ParticlePDA.dimension):
+            '''
+            if (math.fabs(deff[i][0]) < math.fabs (deff[i][1])):
+                self.pos.append(0)
+            if (math.fabs(deff[i][0]) > math.fabs (deff[i][1])):
+                self.pos.append(1)
+            if (math.fabs(deff[i][0]) == math.fabs (deff[i][1])):
+                self.pos.append(random.randrange(0,2))
+            '''
+            pos.append(random.randrange(0,2))
+            velocity.append(0.01 * random.random())
+            pBest.append(pos[i])
+            particle ['velocity'] = velocity
+            particle ['pos'] = pos
+            particle ['pBest'] = pBest
+        return particle
 
-    def f2(self,particle):
-        i = 0
-        sum = 0
-        for x in particle:
-            sum += math.fabs(ParticlePDA.changes_list[i][x])
-            i += 1
-        print (sum)
-        return sum
-
-    def f1(self,particle):
-        i = 0
-        sum = 0
-        for x in particle:
-            sum += ParticlePDA.changes_list[i][x]
-            i += 1
-        print sum
-        return sum
-
-
+    def bpso (self):
+        pass

@@ -1,84 +1,85 @@
+# Portfolio optimization using particle swarm optimization article - PSO bare bones code
 
-'''
-pso.py
-A simple implementation of the Particle Swarm Optimisation Algorithm.
-Uses Numpy for matrix operations.
-Pradeep Gowda 2009-03-16
-'''
+import random
 
-from numpy import array
-from random import random
-from math import sin, sqrt
+w = 0.729844 # Inertia weight to prevent velocities becoming too large
+c1 = 1.496180 # Scaling co-efficient on the social component
+c2 = 1.496180 # Scaling co-efficient on the cognitive component
+dimension = 20 # Size of the problem
+iterations = 3000
+swarmSize = 30
 
-iter_max = 10000
-pop_size = 100
-dimensions = 2
-c1 = 2
-c2 = 2
-err_crit = 0.00001
-
+# This class contains the code of the Particles in the swarm
 class Particle:
-    pass
+    velocity = []
+    pos = []
+    pBest = []
 
+    def __init__(self):
+        for i in range(dimension):
+            self.pos.append(random.random())
+            self.velocity.append(0.01 * random.random())
+            self.pBest.append(self.pos[i])
+        return
 
-def f6(param):
-    '''Schaffer's F6 function'''
-    para = param*10
-    para = param[0:2]
-    num = (sin(sqrt((para[0] * para[0]) + (para[1] * para[1])))) * \
-        (sin(sqrt((para[0] * para[0]) + (para[1] * para[1])))) - 0.5
-    denom = (1.0 + 0.001 * ((para[0] * para[0]) + (para[1] * para[1]))) * \
-            (1.0 + 0.001 * ((para[0] * para[0]) + (para[1] * para[1])))
-    f6 =  0.5 - (num/denom)
-    errorf6 = 1 - f6
-    return f6, errorf6;
+    def updatePositions(self):
+        for i in range(dimension):
+            self.pos[i] = self.pos[i] + self.velocity[i]
+        return
 
+    def updateVelocities(self, gBest):
+        for i in range(dimension):
+            r1 = random.random()
+            r2 = random.random()
+            social = c1 * r1 * (gBest[i] - self.pos[i])
+            cognitive = c2 * r2 * (self.pBest[i] - self.pos[i])
+            self.velocity[i] = (w * self.velocity[i]) + social + cognitive
+        return
 
-#initialize the particles
-particles = []
-for i in range(pop_size):
-    p = Particle()
-    p.params = array([random() for i in range(dimensions)])
-    p.fitness = 0.0
-    p.v = 0.0
-    particles.append(p)
+    def satisfyConstraints(self):
+        #This is where constraints are satisfied
+        return
 
-# let the first particle be the global best
-gbest = particles[0]
-err = 999999999
-while i < iter_max :
-    for p in particles:
-        fitness,err = f6(p.params)
-        if fitness > p.fitness:
-            p.fitness = fitness
-            p.best = p.params
+# This class contains the particle swarm optimization algorithm
+class ParticleSwarmOptimizer:
+    solution = []
+    swarm = []
 
-        if fitness > gbest.fitness:
-            gbest = p
-        v = p.v + c1 * random() * (p.best - p.params) \
-                + c2 * random() * (gbest.params - p.params)
-        p.params = p.params + v
+    def __init__(self):
+        for h in range(swarmSize):
+            particle = Particle()
+            self.swarm.append(particle)
+        return
 
-    i  += 1
-    if err < err_crit:
-        break
-    #progress bar. '.' = 10%
-    if i % (iter_max/10) == 0:
-        print '.'
+    def optimize(self):
+        for i in range(iterations):
+            print "iteration ", i
+            #Get the global best particle
+            gBest = self.swarm[0]
+            for j in range(swarmSize):
+                pBest = self.swarm[j].pBest
+                if self.f(pBest) > self.f(gBest):
+                    gBest = pBest
+            solution = gBest
+            #Update position of each paricle
+            for k in range(swarmSize):
+                self.swarm[k].updateVelocities(gBest)
+                self.swarm[k].updatePositions()
+                self.swarm[k].satisfyConstraints()
+            #Update the personal best positions
+            for l in range(swarmSize):
+                pBest = self.swarm[l].pBest
+                if self.f(self.swarm[l]) > self.f(pBest):
+                    self.swarm[l].pBest = self.swarm[l].pos
+        return solution
 
-print '\nParticle Swarm Optimisation\n'
-print 'PARAMETERS\n','-'*9
-print 'Population size : ', pop_size
-print 'Dimensions      : ', dimensions
-print 'Error Criterion : ', err_crit
-print 'c1              : ', c1
-print 'c2              : ', c2
-print 'function        :  f6'
+    def f(self, solution):
 
-print 'RESULTS\n', '-'*7
-print 'gbest fitness   : ', gbest.fitness
-print 'gbest params    : ', gbest.params
-print 'iterations      : ', i+1
-## Uncomment to print particles
-#for p in particles:
-#    print 'params: %s, fitness: %s, best: %s' % (p.params, p.fitness, p.best)
+        return  random.random()
+
+def main():
+    pso = ParticleSwarmOptimizer()
+    pso.optimize()
+
+if  __name__ =='__main__':
+    main()
