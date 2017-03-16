@@ -1,6 +1,7 @@
 import re,collections,operator
 import networkx as nx
 from privacy_level import privacy_level_generator
+from numpy.random import zipf
 
 class ReadGraph():
     extension = []
@@ -161,11 +162,13 @@ class ReadGraph():
 
     def degree_sequence(self):
         result_in_degree = ReadGraph.G.degree().values()
-        privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
-        privacy_level = privacy_level_generator(file_name=privacy_file_name)
-
+        # privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
+        # privacy_level = privacy_level_generator(file_name=privacy_file_name)
+        a=2
+        s = zipf(a, len(result_in_degree))
+        privacy_level = (s/float(max(s)))*5
         for i in range(0, len(result_in_degree)):
-
+        # sort privacy lvl and curr node
             if result_in_degree[i]:
                 current_node = dict(degree=result_in_degree[i], id=i, privacy_level=(int)(privacy_level[i]) * 2)
                 ReadGraph.sorted_degree_sequence.append(current_node)
