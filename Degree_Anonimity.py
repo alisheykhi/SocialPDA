@@ -2,8 +2,7 @@
 from graph_util import ReadGraph
 from micro_pda import MicroPDA
 from particle_pda import ParticlePDA
-from zipf import distributionForFile
-from zipf import printDistribution
+
 
 
 

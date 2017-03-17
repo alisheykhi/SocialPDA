@@ -2,6 +2,7 @@ import re,collections,operator
 import networkx as nx
 from privacy_level import privacy_level_generator
 from numpy.random import zipf
+from math import ceil
 
 class ReadGraph():
     extension = []
@@ -162,18 +163,19 @@ class ReadGraph():
 
     def degree_sequence(self):
         result_in_degree = ReadGraph.G.degree().values()
-        # privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
-        # privacy_level = privacy_level_generator(file_name=privacy_file_name)
-        a=2
-        s = zipf(a, len(result_in_degree))
-        privacy_level = (s/float(max(s)))*5
+        privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
+        privacy_level = privacy_level_generator(file_name=privacy_file_name)
         for i in range(0, len(result_in_degree)):
-        # sort privacy lvl and curr node
             if result_in_degree[i]:
-                current_node = dict(degree=result_in_degree[i], id=i, privacy_level=(int)(privacy_level[i]) * 2)
+                current_node = dict(degree=result_in_degree[i], id=i)
                 ReadGraph.sorted_degree_sequence.append(current_node)
-
-        ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level' ],x['degree']), reverse=True)
+        ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['degree']), reverse=True)
+        for i in range (0,10):
+            print ReadGraph.sorted_degree_sequence[i]
+        for i in range(0, len(ReadGraph.sorted_degree_sequence)):
+            if ReadGraph.sorted_degree_sequence[i]:
+                ReadGraph.sorted_degree_sequence[i]['privacy_level'] = privacy_level[i]
+        #ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level'],x['degree']), reverse=True)
         ReadGraph.properties ['node_count'] = len(ReadGraph.sorted_degree_sequence)
         max_degree = None
         max_degree_id = None
