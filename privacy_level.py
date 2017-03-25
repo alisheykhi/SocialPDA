@@ -20,6 +20,5 @@ def privacy_level_generator (file_name):
 
     level.sort()
     level.reverse()
-    for i in range (0,10):
-            print level[i]
+
     return level

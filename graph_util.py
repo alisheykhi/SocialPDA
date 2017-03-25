@@ -133,6 +133,8 @@ class ReadGraph():
 
                 if self.file_name.split(".")[0] == 'caida':
                     pattern_meas = re.compile(r"^(\d+)\s+(\d+)\s+([-]?\d+)$", re.VERBOSE | re.MULTILINE)
+                if self.file_name.split(".")[0] == 'caida_test':
+                    pattern_meas = re.compile(r"^(\d+)\s+(\d+)\s+([-]?\d+)$", re.VERBOSE | re.MULTILINE)
                 if self.file_name.split(".")[0] == 'amazon':
                     pattern_meas = re.compile(r"^(\d+)\s+(\d+)", re.VERBOSE | re.MULTILINE)
                 for match in pattern_meas.finditer(text):
@@ -159,8 +161,6 @@ class ReadGraph():
 
                 self.degree_sequence()
 
-
-
     def degree_sequence(self):
         result_in_degree = ReadGraph.G.degree().values()
         privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
@@ -170,11 +170,12 @@ class ReadGraph():
                 current_node = dict(degree=result_in_degree[i], id=i)
                 ReadGraph.sorted_degree_sequence.append(current_node)
         ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['degree']), reverse=True)
-        for i in range (0,10):
-            print ReadGraph.sorted_degree_sequence[i]
+
+        # for i in range (0,5):
+        #     print ReadGraph.sorted_degree_sequence[i]
         for i in range(0, len(ReadGraph.sorted_degree_sequence)):
             if ReadGraph.sorted_degree_sequence[i]:
-                ReadGraph.sorted_degree_sequence[i]['privacy_level'] = privacy_level[i]
+                ReadGraph.sorted_degree_sequence[i]['privacy_level'] = int(privacy_level[i])*2
         #ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level'],x['degree']), reverse=True)
         ReadGraph.properties ['node_count'] = len(ReadGraph.sorted_degree_sequence)
         max_degree = None

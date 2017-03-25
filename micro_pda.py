@@ -37,8 +37,8 @@ class MicroPDA():
                 MicroPDA.g_phi.add_edge(i,j,weight=weight)
                 j += 1
         MicroPDA.shortest_path = nx.dijkstra_path(MicroPDA.g_phi,source=0,target=int(degree[-1]['index']))
-        print "shortest path is:"
-        print MicroPDA.shortest_path
+        #print "shortest path is:",MicroPDA.shortest_path
+
         print "number of Omega Clusters: " + str(len(MicroPDA.shortest_path)-1)
         for index in range(0,len(MicroPDA.shortest_path)-1):
             lb = int (MicroPDA.shortest_path[index])
@@ -47,12 +47,21 @@ class MicroPDA():
             for item in range(lb+1,ub+1):
                 degree[item]['omega_cluster_index'] = index+1
                 omega_cluster.append(degree[item])
-            MicroPDA.omega_clusters.append(omega_cluster)
-        print "\nfist 10 omega cluster :"
+            #pruning
+            max_degree = 0
+            min_degree = float("inf")
+            for node in omega_cluster:
+                max_degree = max(max_degree, node['degree'])
+                min_degree = min(min_degree, node['degree'])
+            if (max_degree-min_degree) >20: #threshold
+                print "difference between max degree and min degree in omega cluster %d is: %d" %(omega_cluster[1]['omega_cluster_index'],max_degree-min_degree)
+            else:
+                MicroPDA.omega_clusters.append(omega_cluster)
+        print "\nfirst 10 omega cluster :"
         for z in range(0,10):
             print MicroPDA.omega_clusters[z]
         print "\nlast 10 omega cluster: "
-        for z in range(len(MicroPDA.shortest_path)-11,len(MicroPDA.shortest_path)-1):
+        for z in range(len(MicroPDA.omega_clusters)-10,len(MicroPDA.omega_clusters)):
             print MicroPDA.omega_clusters[z]
         print "-----------------------------------------------------------"
 
