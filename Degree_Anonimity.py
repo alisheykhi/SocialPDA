@@ -7,4 +7,4 @@ from particle_pda import ParticlePDA
 #graph_books = ReadGraph("polbooks.gml")
 graph_caida = ReadGraph("caida.txt")
 optimal_omega_cluster = MicroPDA(graph_caida.sorted_degree_sequence)
-#particle_pda = ParticlePDA(omega_clusters=optimal_omega_cluster.omega_clusters,beta= 0.5)
+particle_pda = ParticlePDA(omega_clusters=optimal_omega_cluster.omega_clusters,beta= 0.5)
