@@ -23,7 +23,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-BPSO/
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -88,3 +88,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+.Rhistory
+.idea/
+DataSet/amazon.txt
+test.py
+BPSO/
+_config.yml
