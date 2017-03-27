@@ -24,7 +24,7 @@ class ParticlePDA():
         ParticlePDA.beta = float(beta)
         #ParticlePDA.omega_cluster = omega_clusters
         #print omega_clusters[20]
-
+        ####
         #calculate avg of each omega cluster
         for cluster in omega_clusters:
             avg_info = {}
