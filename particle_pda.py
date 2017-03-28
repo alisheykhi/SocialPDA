@@ -13,7 +13,7 @@ class ParticlePDA():
     c2 = 1.496180 # Scaling co-efficient on the cognitive component
     dimension = 0 # Size of the problem
     iterations = 20
-    swarmSize = 100
+    swarmSize = 1000
     solution = []
     vmax =6
     globalBest = []
@@ -84,16 +84,14 @@ class ParticleSwarmOptimizer:
     solution = []
     swarm = []
 
+
     def __init__(self):
         return
 
     def initParticle(self):
         for h in range(ParticlePDA.swarmSize):
             self.swarm.append(Particle())
-            self.swarm[h].pos = np.random.randint(2, size = ParticlePDA.dimension)
-            self.swarm[h].pBest = self.swarm[h].pos
-            self.swarm[h].velocity = np.random.ranf(size=ParticlePDA.dimension)
-        ParticlePDA.globalBest = np.random.randint(1, size = ParticlePDA.dimension)
+        ParticlePDA.globalBest = self.swarm[0].pBest
 
     def optimize(self):
         print ParticlePDA.globalBest
@@ -109,13 +107,14 @@ class ParticleSwarmOptimizer:
                     gbest = pBest
                     print "second one",self.f(gbest)
                     print gbest
-            self.solution = gbest
+                    self.solution = gbest
 
             #Update position of each paricle
             for k in range(ParticlePDA.swarmSize):
                 self.swarm[k].updateVelocities(self.solution)
+            for z in range(ParticlePDA.swarmSize):
                 self.swarm[k].updatePositions()
-                print self.solution,"sol"
+                #print self.solution,"sol"
 
 
                 #self.swarm[k].satisfyConstraints()
@@ -160,10 +159,12 @@ class ParticleSwarmOptimizer:
     # This class contains the particle swarm optimization algorithm
 
 class Particle:
-    pos = []
-    velocity =[]
-    pBest = []
+
     def __init__(self):
+        self.pos = np.random.randint(2, size = ParticlePDA.dimension)
+        self.velocity = np.random.ranf(size=ParticlePDA.dimension)
+        self.pBest = self.pos
+
         # self.pos = np.random.randint(2, size = ParticlePDA.dimension)
         # self.velocity = np.random.ranf(size=ParticlePDA.dimension)
         pass
