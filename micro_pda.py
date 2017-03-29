@@ -1,13 +1,10 @@
-
 import networkx as nx
-
-
-
 
 class MicroPDA():
     g_phi = nx.DiGraph()
     shortest_path = []
     omega_clusters = []
+    removed_omega_clusters = []
 
     def __init__(self, sorted_degree_sequence):
         print "-----------------------------------------------------------"
@@ -20,7 +17,6 @@ class MicroPDA():
         sorted_degree_sequence.insert(0,node_zero)
         #print len(degree)
         self.find_shortest_path(sorted_degree_sequence)
-
 
     def find_shortest_path (self,degree):
 
@@ -56,6 +52,7 @@ class MicroPDA():
                 max_degree = max(max_degree, node['degree'])
                 min_degree = min(min_degree, node['degree'])
             if (max_degree-min_degree) >20: #threshold
+                self.removed_omega_clusters.append(omega_cluster)
                 print "difference between max degree and min degree in omega cluster %d is: %d" %(omega_cluster[1]['omega_cluster_index'],max_degree-min_degree)
             else:
                 MicroPDA.omega_clusters.append(omega_cluster)

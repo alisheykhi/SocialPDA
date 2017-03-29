@@ -14,11 +14,13 @@ class ParticlePDA():
     _plotPoints = []
     solution = []
     clusters_avg_embedded = []
+    removed_clusters = []
 
-    def __init__(self,omega_clusters,beta):
+    def __init__(self,omega_clusters,beta,removed_omega_clusters):
         print "____________________ParticlePDA____________________________"
         print "-----------------------------------------------------------"
         self.beta = float(beta)
+        self.removed_clusters = removed_omega_clusters
         for cluster in omega_clusters:
             avg_info = {}
             sum, avg  = 0 , 0
@@ -72,6 +74,10 @@ class ParticlePDA():
                     node['avg']= math.floor((self.avg_clusters[i]['avg']))
             self.clusters_avg_embedded.append(self.clusters[i])
             i+=1
+        for cluster in self.removed_clusters:
+            for node in cluster:
+                node['avg'] = 0
+            self.clusters_avg_embedded.append(cluster)
         self.clusters_avg_embedded.sort(key=lambda x:(x[0]['omega_cluster_index']), reverse=False)
         print "\n after Particle PDA"
         print "first 10 omega cluster:"
