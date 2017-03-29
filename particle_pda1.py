@@ -1,139 +1,71 @@
+
 import math, random,sys
-
-
-
-# chera globalbest injure ??? Debug she har iter yadehs mire !
-
+import numpy as np
+import scipy.spatial as spp
+from Models import *
+from Controllers import *
+import pylab as pyl
 
 class ParticlePDA():
-    changes_list =[]
+    differences =[]
+    omega_cluster = []
+    avg_clusters = []
     beta = 0
-    w = 0.729844 # Inertia weight to prevent velocities becoming too large
-    c1 = 1.496180 # Scaling co-efficient on the social component
-    c2 = 1.496180 # Scaling co-efficient on the cognitive component
-    dimension = 0 # Size of the problem
-    iterations = 20
-    swarmSize = 10
-    solution = []
+    _plotPoints = []
 
     def __init__(self,omega_clusters,beta):
         print "____________________ParticlePDA____________________________"
         print "-----------------------------------------------------------"
-        ParticlePDA.beta = float(beta)
+        self.beta = float(beta)
         for cluster in omega_clusters:
-            sum, count, avg ,index = 0 , 0 , 0 ,1
+            avg_info = {}
+            sum, avg  = 0 , 0
             for node in cluster:
                 sum += int (node['degree'])
-                count +=1
-            avg = float (sum)/count
-            floor, ceil = 0,0
-            for node in cluster:
-                floor += int (math.fabs(int (node['degree']) - math.floor(avg)))
-                ceil += int ( math.fabs(int (node['degree']) - math.ceil(avg)))
-            ParticlePDA.changes_list.append((floor,ceil))
-        ParticlePDA.dimension = len(ParticlePDA.changes_list)
-        particleSwarmOptimizer = ParticleSwarmOptimizer(ParticlePDA.changes_list)
-        particleSwarmOptimizer.optimize()
-        print particleSwarmOptimizer.solution
-
-class ParticleSwarmOptimizer:
-    solution = []
-    swarm = []
-    globalBest = []
-
-    def __init__(self,deff):
-        for h in range(ParticlePDA.swarmSize):
-            self.swarm.append(Particle(deff))
-        return
-
-    def optimize(self):
-        self.globalBest = self.swarm[0].pos
-        for i in range(ParticlePDA.iterations):
-            gBest = self.globalBest
-            print "iteration ", i+1 ,"="
-            for j in range(ParticlePDA.swarmSize):
-                gBest = self.globalBest
-                pBest = self.swarm[j].pBest
-                if self.f(pBest) < self.f(gBest):
-                    gBest = pBest
-                    self.globalBest = gBest
-                    print self.f(gBest)
-            self.solution = gBest
-            #Update position of each paricle
-            for k in range(ParticlePDA.swarmSize):
-                self.swarm[k].updateVelocities(gBest)
-                self.swarm[k].updatePositions()
-                #self.swarm[k].satisfyConstraints()
-            #Update the personal best positions
-            for l in range(ParticlePDA.swarmSize):
-                pBest = self.swarm[l].pBest
-                if self.f(self.swarm[l].pos) < self.f(pBest):
-                    self.swarm[l].pBest = self.swarm[l].pos
-        return self.solution
-
-    def f(self, particle):
-        return ((ParticlePDA.beta * self.f1(particle) )+((1-ParticlePDA.beta) * self.f2(particle)))
-
-    def f2(self,particle):
-
-        i = 0
-        sum = 0
-        for x in particle:
-            sum += math.fabs(ParticlePDA.changes_list[i][x])
-            i += 1
-        #print (sum)
-        return sum
-
-    def f1(self,particle):
-        i = 0
-        sum = 0
-        for x in particle:
-            sum += ParticlePDA.changes_list[i][x]
-            i += 1
-        #print sum
-        return sum
-    # This class contains the particle swarm optimization algorithm
-class Particle:
+            avg = float (sum)/len(cluster)
+            if not avg.is_integer():
+                self.omega_cluster.append(cluster)
+                avg_info['avg'] = avg
+                avg_info['omega_cluster_index'] = cluster[0]['omega_cluster_index']
+                self.avg_clusters.append(avg_info)
 
 
-    def __init__(self,deff):
-        self.velocity = []
-        self.pos = []
-        self.pBest = []
-        for i in range(0,ParticlePDA.dimension):
-            '''
-            if (math.fabs(deff[i][0]) < math.fabs (deff[i][1])):
-                self.pos.append(0)
-            if (math.fabs(deff[i][0]) > math.fabs (deff[i][1])):
-                self.pos.append(1)
-            if (math.fabs(deff[i][0]) == math.fabs (deff[i][1])):
-                self.pos.append(random.randrange(0,2))
-            '''
-            self.pos.append(random.randrange(0,2))
-            self.velocity.append(0.01 * random.random())
-            self.pBest.append(self.pos[i])
-        return
+        self._popSize = popSize = 500
+        self._dimensions = dimensions  = len(ParticlePDA.omega_cluster)
+        self._generations = generations = 100
+        print "number of particle :",dimensions
+        swarm   = SwarmModel()
+        sc      = SwarmController("binary",self.beta,self.omega_cluster,self.avg_clusters)
+        sc.initSwarm(swarm, "binary", popSize, dimensions)
+        fitness = 1
+        idx = 0
+        for i in range(generations):
+            sc.updateSwarm(swarm)
+            if swarm._bestPositionFitness < fitness:
+                fitness = swarm._bestPositionFitness
+                idx = i
+            gen = i+1
+            #fit = dimensions - (dimensions * swarm._bestPositionFitness)
+            fit = swarm._bestPositionFitness
+            self._plotPoints.append( (gen, fit) )
+#            self._plotPoints += (i+1, 1 - swarm._bestPositionFitness)
+            print "Generation", i+1,"\t-> BestPos:", swarm._bestPosition, \
+                "\tBestFitness:", swarm._bestPositionFitness
 
-    def updatePositions(self):
-        for i in range(ParticlePDA.dimension):
-            if (random.random() >= self.sigmoid(self.velocity[i]) ):
-                self.pos[i] = 0
-            else:
-                self.pos[i] = 1
-        return
+    def plotResults(self):
+        print self._plotPoints
+        x = []
+        y = []
+        for (generation, fitness) in self._plotPoints:
+            x.append(generation)
+            y.append(fitness)
+#            print "%d" % (fitness)
+        pyl.plot(x, y)
 
-    def updateVelocities(self, gBest):
-        for i in range(ParticlePDA.dimension):
-            r1 = random.random()
-            r2 = random.random()
-            social = ParticlePDA.c1 * r1 * (gBest[i] - self.pos[i])
-            cognitive = ParticlePDA.c2 * r2 * (self.pBest[i] - self.pos[i])
-            self.velocity[i] =  social + cognitive #+ (ParticlePDA.w * self.velocity[i])
-        return
+        pyl.grid(True)
+        pyl.title('Particle PDA')
+        pyl.xlabel('Fitness')
+        pyl.ylabel('Generation (i)')
+        pyl.savefig('particle_pda_plot')
 
-    def sigmoid (self, x):
-        return 1 / (1+ math.exp(-x))
-
-    def satisfyConstraints(self):
-        #This is where constraints are satisfied
-        return
+        pyl.show()

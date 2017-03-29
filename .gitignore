@@ -92,5 +92,4 @@ ENV/
 .idea/
 DataSet/amazon.txt
 test.py
-BPSO/
 _config.yml

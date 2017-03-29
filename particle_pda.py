@@ -3,6 +3,7 @@ import math, random,sys
 import numpy as np
 import scipy.spatial as spp
 
+
 class ParticlePDA():
     differences =[]
     omega_cluster = []
@@ -12,13 +13,14 @@ class ParticlePDA():
     c1 = 1.496180 # Scaling co-efficient on the social component
     c2 = 1.496180 # Scaling co-efficient on the cognitive component
     dimension = 0 # Size of the problem
-    iterations = 20
-    swarmSize = 1000
+    iterations = 10
+    swarmSize = 100
     solution = []
     vmax =6
     globalBest = []
 
     def __init__(self,omega_clusters,beta):
+
         print "____________________ParticlePDA____________________________"
         print "-----------------------------------------------------------"
         ParticlePDA.beta = float(beta)
@@ -42,8 +44,6 @@ class ParticlePDA():
             #     floor += int (math.fabs(int (node['degree']) - math.floor(avg)))
             #     ceil += int ( math.fabs(int (node['degree']) - math.ceil(avg)))
             # ParticlePDA.differences.append((floor,ceil))
-
-        ParticlePDA.dimension = len(ParticlePDA.omega_cluster)
         print "number of particle :",ParticlePDA.dimension
 
         # print "omega clusters:" , ParticlePDA.omega_cluster
@@ -51,10 +51,7 @@ class ParticlePDA():
         # print "length avg_omegacluster:" ,len(ParticlePDA.omega_cluster)
         # print "length avg_omegacluster:" ,len(ParticlePDA.avg_clusters)
         # print ParticlePDA.dimension
-
         #print self.particel()['velocity']
-
-
         # print omega_clusters[0]
         # sum, count, avg ,index = 0 , 0 , 0 ,1
         # for node in omega_clusters[0]:
@@ -83,6 +80,7 @@ class ParticlePDA():
 class ParticleSwarmOptimizer:
     solution = []
     swarm = []
+    gBest = []
 
 
     def __init__(self):
@@ -91,38 +89,28 @@ class ParticleSwarmOptimizer:
     def initParticle(self):
         for h in range(ParticlePDA.swarmSize):
             self.swarm.append(Particle())
-        ParticlePDA.globalBest = self.swarm[0].pBest
+        self.gBest = self.swarm[0].pBest
 
     def optimize(self):
         print ParticlePDA.globalBest
-        self.solution = ParticlePDA.globalBest
+
         for i in range(ParticlePDA.iterations): # 0 -> iter-1
-            gbest = self.solution
-            print gbest , self.f(gbest)
+            print self.gBest , self.f(self.gBest)
             print "iteration ", i+1 ,"---------------------------"
             for j in range(ParticlePDA.swarmSize):
                 pBest = self.swarm[j].pBest
-                if self.f(pBest) < self.f(gbest):
-                    print "first Global",self.f(gbest)
-                    gbest = pBest
-                    print "second one",self.f(gbest)
-                    print gbest
-                    self.solution = gbest
-
-            #Update position of each paricle
-            for k in range(ParticlePDA.swarmSize):
-                self.swarm[k].updateVelocities(self.solution)
-            for z in range(ParticlePDA.swarmSize):
-                self.swarm[k].updatePositions()
+                if self.f(pBest) < self.f(self.gBest):
+                    print "first Global",self.f(self.gBest)
+                    gBest = pBest
+                    print "second one",self.f(self.gBest)
+                    print self.gBest
+                #Update position of each paricle
+                self.swarm[j].updatePositions(self.gBest)
                 #print self.solution,"sol"
-
-
                 #self.swarm[k].satisfyConstraints()
             #Update the personal best positions
-
-            for l in range(ParticlePDA.swarmSize):
-                if self.f(self.swarm[l].pos) < self.f(self.swarm[l].pBest):
-                    self.swarm[l].pBest = self.swarm[l].pos
+                if self.f(self.swarm[j].pos) < self.f(self.swarm[j].pBest):
+                    self.swarm[j].pBest = self.swarm[l].pos
 
         return self.solution
 
@@ -167,17 +155,8 @@ class Particle:
 
         # self.pos = np.random.randint(2, size = ParticlePDA.dimension)
         # self.velocity = np.random.ranf(size=ParticlePDA.dimension)
-        pass
-    def updatePositions(self):
-        for i in range(ParticlePDA.dimension):
-            if np.random.rand(1) < self.sigmoid(self.velocity[i]):
-                self.pos[i] = 0
-            else:
-                self.pos[i] = 1
-        return
 
-    def updateVelocities(self, gBest):
-
+    def updatePositions(self, gBest):
         for i in range(ParticlePDA.dimension):
             r1 = random.random()
             r2 = random.random()
@@ -189,6 +168,10 @@ class Particle:
             elif abs(velocity) > ParticlePDA.vmax:
                 velocity = -ParticlePDA.vmax
             self.velocity[i] =  velocity #+ (ParticlePDA.w * self.velocity[i])
+            if np.random.rand(1) < self.sigmoid(self.velocity[i]):
+                self.pos[i] = 0
+            else:
+                self.pos[i] = 1
         return
 
     def sigmoid (self, x):
