@@ -40,6 +40,7 @@ class MicroPDA():
         #print "shortest path is:",MicroPDA.shortest_path
 
         print "number of Omega Clusters: " + str(len(MicroPDA.shortest_path)-1)
+        print "\n pruning:"
         for index in range(0,len(MicroPDA.shortest_path)-1):
             lb = int (MicroPDA.shortest_path[index])
             ub = int (MicroPDA.shortest_path[index+1])
@@ -48,6 +49,7 @@ class MicroPDA():
                 degree[item]['omega_cluster_index'] = index+1
                 omega_cluster.append(degree[item])
             #pruning
+
             max_degree = 0
             min_degree = float("inf")
             for node in omega_cluster:
