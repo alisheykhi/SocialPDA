@@ -42,7 +42,7 @@ class ParticlePDA():
         self._popSize = popSize = 50
         self._dimensions = dimensions  = len(self.clusters)
         self._generations = generations = 10
-        print "number of particle :",dimensions
+        print " particle dimension:",dimensions
         print "\nBinary PSO output:"
         swarm   = SwarmModel()
         sc      = SwarmController("binary",self.beta,self.clusters,self.avg_clusters)

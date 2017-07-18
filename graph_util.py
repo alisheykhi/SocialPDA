@@ -30,6 +30,7 @@ class ReadGraph():
         self.converter()
 
 
+
     def converter(self):
         '''
         chose correct converter
@@ -138,19 +139,17 @@ class ReadGraph():
                 if self.file_name.split(".")[0] == 'amazon':
                     pattern_meas = re.compile(r"^(\d+)\s+(\d+)", re.VERBOSE | re.MULTILINE)
                 for match in pattern_meas.finditer(text):
-                    nodes_list.append("%s" % int(match.group(1)))
-                    nodes_list.append("%s" % int(match.group(2)))
+                    # nodes_list.append("%s" % int(match.group(1)))
+                    # nodes_list.append("%s" % int(match.group(2)))
+                    ReadGraph.G.add_edge(int(match.group(1)),int( match.group(2)))
 
-                    ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
+                # ReadGraph.nodes = list(set(nodes_list))
+                # for node in ReadGraph.nodes:
+                #     ReadGraph.G.add_node(int(node))
+                # for edge in ReadGraph.edges:
+                #     ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
 
-                ReadGraph.nodes = list(set(nodes_list))
 
-
-                for node in ReadGraph.nodes:
-                    ReadGraph.G.add_node(int(node))
-
-                for edge in ReadGraph.edges:
-                    ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
                 sum = 0
                 count = 0
                 for NI in ReadGraph.G.degree().values():
@@ -165,9 +164,9 @@ class ReadGraph():
         result_in_degree = ReadGraph.G.degree().values()
         privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
         privacy_level = privacy_level_generator(file_name=privacy_file_name)
-        for i in range(0, len(result_in_degree)):
-            if result_in_degree[i]:
-                current_node = dict(degree=result_in_degree[i], id=i)
+        for node in ReadGraph.G.nodes():
+            if ReadGraph.G.degree(node):
+                current_node = dict(degree = ReadGraph.G.degree(node), id=node)
                 ReadGraph.sorted_degree_sequence.append(current_node)
         ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['degree']), reverse=True)
 
@@ -177,7 +176,7 @@ class ReadGraph():
             if ReadGraph.sorted_degree_sequence[i]:
                 ReadGraph.sorted_degree_sequence[i]['privacy_level'] = int(privacy_level[i])*2
         #ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level'],x['degree']), reverse=True)
-        ReadGraph.properties ['node_count'] = len(ReadGraph.sorted_degree_sequence)
+        ReadGraph.properties['node_count'] = len(ReadGraph.sorted_degree_sequence)
         max_degree = None
         max_degree_id = None
         for node in ReadGraph.sorted_degree_sequence:
