@@ -3,6 +3,7 @@ import math, random,sys
 import numpy as np
 import scipy.spatial as spp
 import networkx as nx
+import logging
 
 class SwarmPDA():
     rho_plus = []
@@ -12,11 +13,13 @@ class SwarmPDA():
     modified_graph = nx.Graph()
     orginal_omega_clusters = []
     modified_omega_clusters = []
+    logging.basicConfig()
+    logger = logging.getLogger('SwarmPDA')
 
     def __init__(self, omega_clusters, graph_G):
 
-        print "____________________SwarmPDA____________________________"
-        print "-----------------------------------------------------------\n\n"
+        print( "____________________SwarmPDA____________________________")
+        print( "-----------------------------------------------------------\n\n")
         self.orginal_graph = graph_G
         self.modified_graph = graph_G
         self.orginal_omega_clusters = omega_clusters
@@ -35,23 +38,23 @@ class SwarmPDA():
                             self.rho_plus.append(node['id'])# a set of nodes whose degree should be increased
                 else :
                     node['rho'] = 0
-        print "top omega cluster with rho parameter"
+        print( "top omega cluster with rho parameter")
         for item in range(0,10):
-            print self.orginal_omega_clusters[item]
-        print "len Rho Minus is %d" % len(self.rho_minus)
-        print "len Rho Plus is %d" %len(self.rho_plus)
-        print(list(self.modified_graph.edges()))
+            print( self.orginal_omega_clusters[item])
+        print( "len Rho Minus is %d" % len(self.rho_minus))
+        print( "len Rho Plus is %d" %len(self.rho_plus))
+        #print((list(self.modified_graph.edges())))
         diff = len(self.rho_minus) - len(self.rho_plus)
-        print 'diff : ', diff
+        print( 'diff : %d' %diff)
         DecDegNode = []
         IncDegNode = []
         if diff > 0:
-            print "we should first delete 1/2 abs(delta(rho))) = %d edges in G:" % math.floor (abs(diff/2.0))
+            print( "we should first delete 1/2 abs(delta(rho))) = %d edges in G:" % math.floor (abs(diff/2.0)))
             while diff > 0:
                 DecDegNode.append(self.rho_minus.pop())
                 diff -= 1
         if diff < 0:
-            print "we should first add 1/2 abs(delta(rho))) = %d edges in G:" % math.floor(abs(diff/2.0))
+            print( "we should first add 1/2 abs(delta(rho))) = %d edges in G:" % math.floor(abs(diff/2.0)))
             while diff < 0:
                 IncDegNode.append(self.rho_plus.pop())
                 diff += 1
@@ -61,9 +64,12 @@ class SwarmPDA():
         if len(IncDegNode) % 2 != 0:
             IncDegNode.pop()
 
-        add_rmv = 0
+        add_rmv= 0
+
         for i in range(0,len(DecDegNode),2):
+            bound = 0
             while True:
+                bound+=1
                 s1 = random.choice(DecDegNode)
                 s2 = random.choice(DecDegNode)
                 if s1 != s2:
@@ -71,13 +77,17 @@ class SwarmPDA():
                         DecDegNode.remove(s1)
                         DecDegNode.remove(s2)
                         add_rmv += 1
-                        print 'remove edge (%d,%d)'%(s1,s2)
+                        #print( 'remove edge (%d,%d)'%(s1,s2))
                         break
                     else:
-                        print 'failed to remove edge %d,%d'%(s1,s2)
+                        self.logger.warning('failed to remove edge %d,%d'%(s1,s2))
+                if bound >50:
+                    break
 
         for i in range(0,len(IncDegNode),2):
+            bound =0
             while True:
+                bound +=1
                 s1 = random.choice(IncDegNode)
                 s2 = random.choice(IncDegNode)
                 if s1 != s2:
@@ -85,11 +95,21 @@ class SwarmPDA():
                         IncDegNode.remove(s1)
                         IncDegNode.remove(s2)
                         add_rmv += 1
-                        print 'add edge %d : (%d,%d)'% (add_rmv,s1,s2)
+                        print( 'add edge %d : (%d,%d)'% (add_rmv,s1,s2))
                         break
                     else:
-                        print 'failed to add edge %d,%d'%(s1,s2)
-
+                        self.logger.warning( 'failed to add edge %d,%d'%(s1,s2))
+                if bound>50:
+                    break
+        #i =0
+        # randomlist = random.sample(xrange(len(self.rho_plus)), len(self.rho_plus))
+        # if len(self.rho_minus) == len(self.rho_plus):
+        #     for index in randomlist:
+        #         self.edge_switch(self.rho_minus[index],self.rho_plus[i])
+        #         i+=1
+        #         #print('edge switch node1 = %d, node2 = %d' %(self.rho_minus[i],self.rho_plus[i]))
+        # else:
+        #     self.logger.warning('rho minus <> rho_plus')
 
     def edge_removal (self, node1, node2):
         bound = 0
@@ -97,6 +117,7 @@ class SwarmPDA():
         if self.modified_graph.degree(node1)==self.modified_graph.degree(node1)==1\
                 or node2 in self.modified_graph.neighbors(node1)\
                 or node1 == node2:
+            self.logger.warning('edge removal failed node1 = %s , node2= %s' % (node1,node2))
             return False
         while True:
             bound +=1
@@ -111,7 +132,7 @@ class SwarmPDA():
                     and neighbor2 != node2:
                 break
             if bound > 50:
-                print 'there is no pivot node for edge removal,try 50 times'
+                self.logger.warning('there is no pivot node for edge removal,try 50 times')
                 break
         self.modified_graph.remove_edge(node1,neighbor1)
         self.modified_graph.remove_edge(node2,neighbor2)
@@ -126,6 +147,7 @@ class SwarmPDA():
 
     def edge_add (self, node1, node2):
         if node1 in self.modified_graph.neighbors(node2) or node1 == node2:
+            self.logger.warning('edge add failed node1 = %s , node2= %s' % (node1,node2))
             return False
         else:
             self.modified_graph.add_edge(node1,node2)
@@ -137,8 +159,9 @@ class SwarmPDA():
         return True
 
     def edge_switch (self, node1, node2):
-        bound = 0
+        bound =0
         if node1==node2:
+            self.logger.warning('edge switch failed node1 = %s , node2= %s' % (node1,node2))
             return False
         else:
             neighbors1 =self.modified_graph.neighbors(node1)
@@ -150,8 +173,8 @@ class SwarmPDA():
                 neighbors1.remove(pivot)
                 if pivot not in neighbors2 and pivot != node1:
                     break
-                if bound > 50:
-                    print 'there is no pivot node for edge switch, try 50 times.'
+                if bound >  max(len(self.modified_graph.neighbors(node1)),len(self.modified_graph.neighbors(node1))):
+                    self.logger.warning('there is no pivot node for edge switch, try 50 times. node1=%d,node2=%d'%(node1,node2))
                     break
             self.modified_graph.remove_edge(node1,pivot)
             self.modified_graph.add_edge(node2,pivot)
@@ -164,6 +187,17 @@ class SwarmPDA():
                         node['degree'] +=1
                         node['rho'] += 1
         return True
+
+
+class ParticleSwarmOptimizer:
+    solution = []
+    swarm = []
+    gBest = []
+    modified_g= nx.Graph()
+    original  = nx.Graph()
+    rho_minus = []
+    rho_plus = []
+
 
 
 
