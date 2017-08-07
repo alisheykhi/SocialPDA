@@ -4,6 +4,8 @@ import numpy as np
 import scipy.spatial as spp
 import networkx as nx
 import logging
+import matplotlib.pyplot as plt
+import tqdm
 
 class SwarmPDA():
     rho_plus = []
@@ -21,7 +23,7 @@ class SwarmPDA():
         print( "____________________SwarmPDA____________________________")
         print( "-----------------------------------------------------------\n\n")
         self.orginal_graph = graph_G
-        self.modified_graph = graph_G
+        self.modified_graph = graph_G.copy()
         self.orginal_omega_clusters = omega_clusters
         self.modified_omega_clusters = omega_clusters
         rho = 0
@@ -101,7 +103,7 @@ class SwarmPDA():
                         self.logger.warning( 'failed to add edge %d,%d'%(s1,s2))
                 if bound>50:
                     break
-        #i =0
+        # i =0
         # randomlist = random.sample(xrange(len(self.rho_plus)), len(self.rho_plus))
         # if len(self.rho_minus) == len(self.rho_plus):
         #     for index in randomlist:
@@ -110,6 +112,12 @@ class SwarmPDA():
         #         #print('edge switch node1 = %d, node2 = %d' %(self.rho_minus[i],self.rho_plus[i]))
         # else:
         #     self.logger.warning('rho minus <> rho_plus')
+
+        swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
+        swarmPSO.initializeSwarm()
+
+
+
 
     def edge_removal (self, node1, node2):
         bound = 0
@@ -158,45 +166,126 @@ class SwarmPDA():
                         node['rho'] += 1
         return True
 
-    def edge_switch (self, node1, node2):
+
+
+
+class SwarmBPSO:
+    solution = []
+    swarm = []
+    modified_g= []
+    original_g  = nx.Graph()
+    omega_cluster = []
+    rho_minus = []
+    rho_plus = []
+    dimension = 2
+    nof_particle = 3
+    gBest = []
+    pBest = []
+    logging.basicConfig()
+    logger = logging.getLogger('SwarmBPSO')
+    node_change = []
+
+
+    def __init__(self,original_graph, rho_plus, rho_minus, original_omega_cluster):
+        self.original_g = original_graph
+        self.omega_cluster = original_omega_cluster
+        self.rho_minus = rho_minus
+        self.rho_plus = rho_plus
+
+
+    def initializeSwarm(self):
+        for i in range(self.dimension):
+            positions = []
+            graphs = []
+            for j in range(self.nof_particle):
+                pi_plus =list( self.rho_plus)
+                random.shuffle(pi_plus)
+                positions.append(pi_plus)
+                graphs.append(self.original_g.copy())
+            self.swarm.append(positions)
+            self.modified_g.append(graphs)
+
+        # modify graph based on new rho_plus
+
+        # calculate personal best for every particle
+        print "calculate original FF ..."
+        original_fitness = self.fitness(self.original_g)
+        print "Original FF is:" , original_fitness
+        print self.original_g.neighbors(3356)
+        print 'Edge switch:'
+        for i,dim in enumerate(self.modified_g):
+            for j,g in enumerate(dim):
+                indx = ((i)*self.nof_particle)+(j+1)
+                if (self.dimension*self.nof_particle) == indx:
+                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                else:
+                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                for k,node in enumerate(self.swarm[i][j]):
+                    self.edge_switch(g,node,self.rho_minus[k])
+        print 'personal best:'
+        for i,dim in enumerate(self.modified_g):
+            pb = []
+            for j,g in enumerate(dim):
+                indx = ((i)*self.nof_particle)+(j+1)
+                if (self.dimension*self.nof_particle) == indx:
+                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                else:
+                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                modified_fitness = self.fitness(g)
+                pb.append( abs(original_fitness -  modified_fitness))
+            self.pBest.append(pb)
+        print self.pBest
+        # calculate global best
+
+
+    def fitness(self,graph):
+        eigenSum = 0
+        #closeness = nx.closeness_centrality(graph,701)
+        eigenVector = nx.eigenvector_centrality(graph)
+        for key,value in eigenVector.items():
+            eigenSum+=value
+        return eigenSum
+
+    def edge_switch (self,graph, node1, node2):
         bound =0
         if node1==node2:
             self.logger.warning('edge switch failed node1 = %s , node2= %s' % (node1,node2))
             return False
         else:
-            neighbors1 =self.modified_graph.neighbors(node1)
-            neighbors2 = self.modified_graph.neighbors(node2)
+            neighbors1 =graph.neighbors(node1)
+            neighbors2 = graph.neighbors(node2)
             pivot = None
             while True:
                 bound+=1
-                pivot = min (neighbors1)
+                try:
+                    pivot = min (neighbors1)  # WRONG !!!!!!!!!
+                except:
+                    self.logger.warning('edge switch failed (no neighbor) node1 = %s , node2= %s' % (node1,node2))
+                    return False
                 neighbors1.remove(pivot)
                 if pivot not in neighbors2 and pivot != node1:
                     break
-                if bound >  max(len(self.modified_graph.neighbors(node1)),len(self.modified_graph.neighbors(node1))):
+                if bound >  max(len(graph.neighbors(node1)),len(graph.neighbors(node1))):
                     self.logger.warning('there is no pivot node for edge switch, try 50 times. node1=%d,node2=%d'%(node1,node2))
                     break
-            self.modified_graph.remove_edge(node1,pivot)
-            self.modified_graph.add_edge(node2,pivot)
-            for cluster in self.modified_omega_clusters:
-                for node in cluster:
-                    if node['id']  == node1:
-                        node['degree'] -=1
-                        node['rho'] -= 1
-                    if node['id']  == node2:
-                        node['degree'] +=1
-                        node['rho'] += 1
+            graph.remove_edge(node1,pivot)
+            graph.add_edge(node2,pivot)
+            # for cluster in self.omega_cluster:
+            #     for node in cluster:
+            #         if node['id']  == node1:
+            #             node['degree'] -=1
+            #             node['rho'] -= 1
+            #         if node['id']  == node2:
+            #             node['degree'] +=1
+            #             node['rho'] += 1
+            #print 'perform edge switch ',node1,'->',node2
         return True
 
 
-class ParticleSwarmOptimizer:
-    solution = []
-    swarm = []
-    gBest = []
-    modified_g= nx.Graph()
-    original  = nx.Graph()
-    rho_minus = []
-    rho_plus = []
+
+
+
+
 
 
 
