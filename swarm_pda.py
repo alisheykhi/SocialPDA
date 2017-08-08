@@ -48,61 +48,96 @@ class SwarmPDA():
         #print((list(self.modified_graph.edges())))
         diff = len(self.rho_minus) - len(self.rho_plus)
         print( 'diff : %d' %diff)
-        DecDegNode = []
-        IncDegNode = []
+        if diff % 2 != 0:
+            if diff >0:
+                diff-=1
+                self.rho_minus.pop(random.randrange(len(self.rho_minus)))
+            if diff <0:
+                diff +=1
+                self.rho_plus.pop(random.randrange(len(self.rho_plus)))
         if diff > 0:
             print( "we should first delete 1/2 abs(delta(rho))) = %d edges in G:" % math.floor (abs(diff/2.0)))
             while diff > 0:
-                DecDegNode.append(self.rho_minus.pop())
-                diff -= 1
+                bound = 0
+                while True:
+                    bound+=1
+                    r1 = random.randrange(len(self.rho_minus))
+                    r2 = random.randrange(len(self.rho_minus))
+                    s1 = self.rho_minus.pop(r1)
+                    s2 = self.rho_minus.pop(r2)
+                    if s1 != s2:
+                        if not self.edge_removal(s1,s2):
+                            self.rho_minus.insert(r1,s1)
+                            self.rho_minus.insert(r2,s2)
+                        else:
+                            # print "remove edge %d,%d" %(s1,s2)
+                            break
+                    if bound >50:
+                        logging.error('failed to remove edge %d,%d'%(s1,s2))
+                        break
+                diff -= 2
+
         if diff < 0:
             print( "we should first add 1/2 abs(delta(rho))) = %d edges in G:" % math.floor(abs(diff/2.0)))
             while diff < 0:
-                IncDegNode.append(self.rho_plus.pop())
-                diff += 1
-
-        if len(DecDegNode) % 2 != 0:
-            DecDegNode.pop()
-        if len(IncDegNode) % 2 != 0:
-            IncDegNode.pop()
-
-        add_rmv= 0
-
-        for i in range(0,len(DecDegNode),2):
-            bound = 0
-            while True:
-                bound+=1
-                s1 = random.choice(DecDegNode)
-                s2 = random.choice(DecDegNode)
-                if s1 != s2:
-                    if self.edge_removal(s1,s2):
-                        DecDegNode.remove(s1)
-                        DecDegNode.remove(s2)
-                        add_rmv += 1
-                        #print( 'remove edge (%d,%d)'%(s1,s2))
+                bound = 0
+                while True:
+                    bound+=1
+                    r1 = random.randrange(len(self.rho_plus))
+                    r2 = random.randrange(len(self.rho_plus))
+                    s1 = self.rho_plus.pop(r1)
+                    s2 = self.rho_plus.pop(r2)
+                    if s1 != s2:
+                        if not self.edge_add(s1,s2):
+                            self.rho_plus.insert(r1,s1)
+                            self.rho_plus.insert(r2,s2)
+                        else:
+                            # print "add edge %d,%d" %(s1,s2)
+                            break
+                    if bound >50:
+                        logging.error('failed to add edge %d,%d'%(s1,s2))
                         break
-                    else:
-                        self.logger.warning('failed to remove edge %d,%d'%(s1,s2))
-                if bound >50:
-                    break
+                diff += 2
 
-        for i in range(0,len(IncDegNode),2):
-            bound =0
-            while True:
-                bound +=1
-                s1 = random.choice(IncDegNode)
-                s2 = random.choice(IncDegNode)
-                if s1 != s2:
-                    if self.edge_add(s1,s2):
-                        IncDegNode.remove(s1)
-                        IncDegNode.remove(s2)
-                        add_rmv += 1
-                        print( 'add edge %d : (%d,%d)'% (add_rmv,s1,s2))
-                        break
-                    else:
-                        self.logger.warning( 'failed to add edge %d,%d'%(s1,s2))
-                if bound>50:
-                    break
+
+        print 'final Rho diff :', len(self.rho_minus)-len(self.rho_plus)
+        # add_rmv= 0
+        #
+        # for i in range(0,len(DecDegNode),2):
+        #     bound = 0
+        #     while True:
+        #         bound+=1
+        #         s1 = random.choice(DecDegNode)
+        #         s2 = random.choice(DecDegNode)
+        #         if s1 != s2:
+        #             if self.edge_removal(s1,s2):
+        #                 DecDegNode.remove(s1)
+        #                 DecDegNode.remove(s2)
+        #                 add_rmv += 1
+        #                 #print( 'remove edge (%d,%d)'%(s1,s2))
+        #                 break
+        #             else:
+        #                 self.logger.warning('failed to remove edge %d,%d'%(s1,s2))
+        #         if bound >50:
+        #             break
+        #
+        # for i in range(0,len(IncDegNode),2):
+        #     bound =0
+        #     while True:
+        #         bound +=1
+        #         s1 = random.choice(IncDegNode)
+        #         s2 = random.choice(IncDegNode)
+        #         if s1 != s2:
+        #             if self.edge_add(s1,s2):
+        #                 IncDegNode.remove(s1)
+        #                 IncDegNode.remove(s2)
+        #                 add_rmv += 1
+        #                 print( 'add edge %d : (%d,%d)'% (add_rmv,s1,s2))
+        #                 break
+        #             else:
+        #                 self.logger.warning( 'failed to add edge %d,%d'%(s1,s2))
+        #         if bound>50:
+        #             break
         # i =0
         # randomlist = random.sample(xrange(len(self.rho_plus)), len(self.rho_plus))
         # if len(self.rho_minus) == len(self.rho_plus):
@@ -115,6 +150,9 @@ class SwarmPDA():
 
         swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
         swarmPSO.initializeSwarm()
+
+
+
 
 
 
@@ -208,10 +246,10 @@ class SwarmBPSO:
         # modify graph based on new rho_plus
 
         # calculate personal best for every particle
+
         print "calculate original FF ..."
         original_fitness = self.fitness(self.original_g)
         print "Original FF is:" , original_fitness
-        print self.original_g.neighbors(3356)
         print 'Edge switch:'
         for i,dim in enumerate(self.modified_g):
             for j,g in enumerate(dim):
@@ -233,6 +271,7 @@ class SwarmBPSO:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
                 modified_fitness = self.fitness(g)
                 pb.append( abs(original_fitness -  modified_fitness))
+
             self.pBest.append(pb)
         print self.pBest
         # calculate global best
@@ -252,24 +291,32 @@ class SwarmBPSO:
             self.logger.warning('edge switch failed node1 = %s , node2= %s' % (node1,node2))
             return False
         else:
+
             neighbors1 =graph.neighbors(node1)
             neighbors2 = graph.neighbors(node2)
-            pivot = None
             while True:
                 bound+=1
                 try:
-                    pivot = min (neighbors1)  # WRONG !!!!!!!!!
+                    pivot = (0,float('inf'))
+                    for node in graph.degree_iter(neighbors1):
+                        if node[1] < pivot[1]:
+                            pivot = node
                 except:
                     self.logger.warning('edge switch failed (no neighbor) node1 = %s , node2= %s' % (node1,node2))
                     return False
-                neighbors1.remove(pivot)
-                if pivot not in neighbors2 and pivot != node1:
+                #print pivot[0], neighbors1
+                if  not neighbors1:
+                    self.logger.warning('edge switch failed (no neighbor) node1 = %s , node2= %s, neighbors1 = %s' % (node1,node2,neighbors1))
+                    return False
+                neighbors1.remove(pivot[0])
+                if pivot[0] not in neighbors2 and pivot[0] != node1:
                     break
-                if bound >  max(len(graph.neighbors(node1)),len(graph.neighbors(node1))):
+                if bound > (len(graph.neighbors(node1))+5):
                     self.logger.warning('there is no pivot node for edge switch, try 50 times. node1=%d,node2=%d'%(node1,node2))
                     break
-            graph.remove_edge(node1,pivot)
-            graph.add_edge(node2,pivot)
+
+            graph.remove_edge(node1,pivot[0])
+            graph.add_edge(node2,pivot[0])
             # for cluster in self.omega_cluster:
             #     for node in cluster:
             #         if node['id']  == node1:

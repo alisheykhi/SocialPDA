@@ -51,7 +51,7 @@ class MicroPDA():
             for node in omega_cluster:
                 max_degree = max(max_degree, node['degree'])
                 min_degree = min(min_degree, node['degree'])
-            if (max_degree-min_degree) >200000: #threshold
+            if (max_degree-min_degree) >200: #threshold
                 self.removed_omega_clusters.append(omega_cluster)
                 print "difference between max degree and min degree in omega cluster %d is: %d" %(omega_cluster[1]['omega_cluster_index'],max_degree-min_degree)
             else:
