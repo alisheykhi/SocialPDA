@@ -173,8 +173,9 @@ class SwarmBPSO:
     logging.basicConfig()
     logger = logging.getLogger('SwarmBPSO')
     node_change = []
-    noi =10
+    generation =10
     original_f= 0
+    velocity = []
 
 
     def __init__(self,original_graph, rho_plus, rho_minus, original_omega_cluster):
@@ -218,8 +219,48 @@ class SwarmBPSO:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+        # update velocity
+
+
+
+
+
+
+
+
+
+
+
+
+
         self.Personal_Best()
         self.Global_Best()
+
+        for iter in range(self.generation):
+            self.Update_Swarm()
+            self.Global_Best()
+            gen = iter+1
+            print "Generation", iter+1,"\t-> \tBestFitness:", self.gBest['Fitness']
+
+
+        # for i in range(generations):
+        #     sc.updateSwarm(swarm)
+        #     if swarm._bestPositionFitness < fitness:
+        #         fitness = swarm._bestPositionFitness
+        #         idx = i
+        #     gen = i+1
+        #     fit = swarm._bestPositionFitness
+        #     self._plotPoints.append( (gen, fit) )
+        #     print "Generation", i+1,"\t-> BestPos:", swarm._bestPosition, \
+        #         "\tBestFitness:", swarm._bestPositionFitness
+        # self.solution = swarm._bestPosition
+
+    def Update_Swarm(self):
+        pass
+    def Update_Velocity(self):
+        pass
+    def Update_Positions(self):
+        pass
 
     def Personal_Best (self):
         print 'Calculate personal best'
@@ -233,7 +274,6 @@ class SwarmBPSO:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-
             self.pBest.append(pb)
         print 'personal best :',self.pBest
 
