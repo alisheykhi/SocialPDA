@@ -170,12 +170,16 @@ class SwarmBPSO:
     nof_particle = 3
     gBest = {'graph':None,'fitness': float('inf')}
     pBest = []
+    newFitness = []
     logging.basicConfig()
     logger = logging.getLogger('SwarmBPSO')
     node_change = []
     generation =10
     original_f= 0
     velocity = []
+    r1 = .2
+    r2 = .3
+    r3 = .3
 
 
     def __init__(self,original_graph, rho_plus, rho_minus, original_omega_cluster):
@@ -199,9 +203,18 @@ class SwarmBPSO:
             self.swarm.append(positions)
             self.modified_g.append(graphs)
 
-        # modify graph based on new rho_plus
-
-        # calculate personal best for every particle
+        for dim in xrange(self.dimension) :
+            particle_vel = []
+            for particle in xrange(self.nof_particle):
+                NoTrasnposition = random.randrange(1,len(self.rho_plus))
+                alist =random.sample(xrange( len(self.rho_plus)), NoTrasnposition)
+                blist =random.sample(xrange( len(self.rho_plus)), NoTrasnposition)
+                transposition = []
+                for f, b in zip(alist,blist):
+                    if f <> b :
+                        transposition.append((f, b))
+                particle_vel.append(transposition)
+            self.velocity.append(particle_vel)
 
         print "calculate original FF ..."
         self.original_f = self.fitness(self.original_g)
@@ -219,28 +232,32 @@ class SwarmBPSO:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-        # update velocity
-
-
-
-
-
-
-
-
-
-
-
-
-
-        self.Personal_Best()
+        print 'Calculate Fitness '
+        for i,dim in enumerate(self.modified_g):
+            pb = []
+            pbest_list = []
+            for j,g in enumerate(dim):
+                init_pbest = {}
+                modified_fitness = self.fitness(g)
+                newfit = self.original_f -  modified_fitness
+                pb.append(newfit)
+                init_pbest['fitness'],init_pbest['pi'] = newfit,self.swarm[i][j]
+                pbest_list.append(init_pbest)
+                indx = ((i)*self.nof_particle)+(j+1)
+                if (self.dimension*self.nof_particle) == indx:
+                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                else:
+                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+            self.newFitness.append(pb)
+            self.pBest.append(pbest_list)
+        print 'New Fitness  :',self.newFitness
+        print 'Personal Best' , self.pBest
         self.Global_Best()
 
         for iter in range(self.generation):
             self.Update_Swarm()
-            self.Global_Best()
             gen = iter+1
-            print "Generation", iter+1,"\t-> \tBestFitness:", self.gBest['Fitness']
+            print "Generation", iter+1,"\t-> \tBestFitness:", self.gBest['fitness']
 
 
         # for i in range(generations):
@@ -256,29 +273,35 @@ class SwarmBPSO:
         # self.solution = swarm._bestPosition
 
     def Update_Swarm(self):
-        pass
-    def Update_Velocity(self):
-        pass
-    def Update_Positions(self):
-        pass
+        self.Update_Velocity()
+        self.Update_Positions()
+        self.Global_Best()
 
-    def Personal_Best (self):
-        print 'Calculate personal best'
-        for i,dim in enumerate(self.modified_g):
-            pb = []
-            for j,g in enumerate(dim):
-                modified_fitness = self.fitness(g)
-                pb.append(self.original_f -  modified_fitness)
+    def Update_Velocity(self):
+        for i,dim in enumerate(self.velocity):
+            for j,_lambda in enumerate(dim):
+                t1 = self.truncation(self.r1,self.velocity[i][j])
+                s1 = self.subtraction(self.swarm[i][j],self.pBest[i][j]['pi'])
+                t2 = self.truncation(self.r2,s1)
+                s2 = self.subtraction(self.swarm[i][j],self.gBest['pi'])
+                t3 = self.truncation(self.r3,s2)
+                c1 = self.concatenation(t1,t2)
+                v = self.concatenation(c1,t3)
+                self.velocity[i][j] = v
+
+    def Update_Positions(self):
+        for i,dim in enumerate(self.swarm):
+            for j,pos in enumerate(dim):
+                self.swarm[i][j] = self.displacement(self.swarm[i][j],self.velocity[i][j])
                 indx = ((i)*self.nof_particle)+(j+1)
+                for k,node in enumerate(self.swarm[i][j]):
+                    self.edge_switch(self.modified_g[i][j],node,self.rho_minus[k])
                 if (self.dimension*self.nof_particle) == indx:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-            self.pBest.append(pb)
-        print 'personal best :',self.pBest
 
-    def Global_Best(self):
-        print 'Calculate Global best'
+    def Personal_Best (self):
         for i,dim in enumerate(self.pBest):
             for j,pbest in enumerate(dim):
                 indx = ((i)*self.nof_particle)+(j+1)
@@ -286,11 +309,21 @@ class SwarmBPSO:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-                if (self.gBest['fitness'] > abs(pbest)):
-                    self.gBest['fitness'],self.gBest['graph'] = pbest,self.modified_g[i][j]
+                if (abs(pbest['fitness']) > abs(self.newFitness[i][j])):
+                    self.pBest[i][j]['fitness'],self.pBest[i][j]['pi'] = self.newFitness[i][j],self.swarm[i][j]
+
+    def Global_Best(self):
+        for i,dim in enumerate(self.pBest):
+            for j,pbest in enumerate(dim):
+                indx = ((i)*self.nof_particle)+(j+1)
+                if (self.dimension*self.nof_particle) == indx:
+                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                else:
+                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                if (self.gBest['fitness'] > abs(pbest['fitness'])):
+                    self.gBest['fitness'],self.gBest['graph'],self.gBest['pi'] = pbest['fitness'],self.modified_g[i][j],pbest['pi']
         print 'global best :',self.gBest
         # calculate global best
-
 
     def fitness(self,graph):
         eigenSum = 0
@@ -321,7 +354,7 @@ class SwarmBPSO:
                     return False
                 #print pivot[0], neighbors1
                 if  not neighbors1:
-                    self.logger.warning('edge switch failed (no neighbor) node1 = %s , node2= %s, neighbors1 = %s' % (node1,node2,neighbors1))
+                    #self.logger.warning('edge switch failed (no neighbor) node1 = %s , node2= %s, neighbors1 = %s' % (node1,node2,neighbors1))
                     return False
                 neighbors1.remove(pivot[0])
                 if pivot[0] not in neighbors2 and pivot[0] != node1:
@@ -342,6 +375,49 @@ class SwarmBPSO:
             #             node['rho'] += 1
             #print 'perform edge switch ',node1,'->',node2
         return True
+
+    def transposition (self,position = [], lambda_tuple = (), *args):
+        position[lambda_tuple[0]],position[lambda_tuple[1]] = position[lambda_tuple[1]],position[lambda_tuple[0]]
+        return position
+
+    def truncation (self, r, velocityList= [], *args):
+        del velocityList[int(r*len(velocityList)):]
+        return velocityList
+
+    def concatenation (self, velocityList1= [], velocityList2= [] , *args):
+        return velocityList1+velocityList2
+
+    def displacement (self, positionList= [], velocityList = [] , * args ):
+        vel = []
+        while velocityList:
+            vel.append(velocityList.pop())
+        for _ in range(0,len(vel)):
+            self.transposition(positionList ,vel.pop())
+        return positionList
+
+    def subtraction (self, positionList1 = [], positionList2 = [], *args ):
+        velocityList = []
+        flag = [False] * len(positionList1)
+        pos1 = positionList1[:]
+        pos2 = positionList2[:]
+        for i, posx in enumerate(pos1):
+            for j, posy in enumerate(pos2):
+                if not flag[j] and posx == posy:
+                    velocityList.append((posx,j))
+                    flag[j] = True
+        return self.__selectionSort(velocityList)
+
+    def __selectionSort(self,alist):
+        lambda_tuple =[]
+        for fillslot in range(len(alist)-1,0,-1):
+            positionOfMax=0
+            for location in range(1,fillslot+1):
+                if alist[location][1]>alist[positionOfMax][1]:
+                    positionOfMax = location
+            if fillslot != positionOfMax :
+                alist[fillslot],alist[positionOfMax] = alist[positionOfMax],alist[fillslot]
+                lambda_tuple.append((fillslot,positionOfMax))
+        return lambda_tuple
 
 
 
