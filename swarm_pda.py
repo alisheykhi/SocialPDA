@@ -85,21 +85,22 @@ class SwarmPDA():
                 bound = 0
                 while True:
                     bound+=1
-                    r1 = random.randrange(len(self.rho_plus))
-                    r2 = random.randrange(len(self.rho_plus))
-                    s1 = self.rho_plus.pop(r1)
-                    s2 = self.rho_plus.pop(r2)
-                    if s1 != s2:
-                        if not self.edge_add(s1,s2):
-                            self.rho_plus.insert(r1,s1)
-                            self.rho_plus.insert(r2,s2)
+                    if  self.rho_minus and  self.rho_plus:
+                        r1 = random.randrange(len(self.rho_plus))
+                        r2 = random.randrange(len(self.rho_plus))
+                        s1 = self.rho_plus.pop(r1)
+                        s2 = self.rho_plus.pop(r2)
+                        if s1 != s2:
+                            if not self.edge_add(s1,s2):
+                                self.rho_plus.insert(r1,s1)
+                                self.rho_plus.insert(r2,s2)
 
-                        else:
-                            print 'add edge %d,%d'%(s1,s2)
+                            else:
+                                print 'add edge %d,%d'%(s1,s2)
+                                break
+                        if bound >50:
+                            logging.error('failed to add edge %d,%d'%(s1,s2))
                             break
-                    if bound >50:
-                        logging.error('failed to add edge %d,%d'%(s1,s2))
-                        break
 
         swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
         swarmPSO.initializeSwarm()
@@ -218,9 +219,9 @@ class SwarmBPSO:
 
         print "calculate original FF ..."
         self.original_f = self.fitness(self.original_g)
-        print "Original FF is:" , self.original_f
+        print "Original graph Fitness:" , self.original_f
         iter = 0
-        self.gBest['fitness'] = self.original_f
+        self.gBest['fitness'] = float('inf')
         print 'iter -> %i'%iter
         print 'Edge switch:'
         for i,dim in enumerate(self.modified_g):
@@ -241,7 +242,7 @@ class SwarmBPSO:
                 modified_fitness = self.fitness(g)
                 newfit = self.original_f -  modified_fitness
                 pb.append(newfit)
-                init_pbest['fitness'],init_pbest['pi'] = newfit,self.swarm[i][j]
+                init_pbest['fitness'],init_pbest['pi'] = abs(newfit),self.swarm[i][j]
                 pbest_list.append(init_pbest)
                 indx = ((i)*self.nof_particle)+(j+1)
                 if (self.dimension*self.nof_particle) == indx:
@@ -251,7 +252,7 @@ class SwarmBPSO:
             self.newFitness.append(pb)
             self.pBest.append(pbest_list)
         print 'New Fitness  :',self.newFitness
-        print 'Personal Best' , self.pBest
+        # print 'Personal Best' , self.pBest
         self.Global_Best()
 
         for iter in range(self.generation):
@@ -273,8 +274,26 @@ class SwarmBPSO:
         # self.solution = swarm._bestPosition
 
     def Update_Swarm(self):
+        print 'Update Velocity'
         self.Update_Velocity()
+        print 'Update Position'
         self.Update_Positions()
+        print 'Update Fitness'
+        del self.newFitness[:]
+        for i,dim in enumerate(self.modified_g):
+            pb = []
+            for j,g in enumerate(dim):
+                modified_fitness = self.fitness(g)
+                newfit = self.original_f -  modified_fitness
+                pb.append(newfit)
+                indx = ((i)*self.nof_particle)+(j+1)
+                if (self.dimension*self.nof_particle) == indx:
+                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                else:
+                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+            self.newFitness.append(pb)
+        print 'New Fitness: ', self.newFitness
+        self.Personal_Best()
         self.Global_Best()
 
     def Update_Velocity(self):
@@ -290,6 +309,7 @@ class SwarmBPSO:
                 self.velocity[i][j] = v
 
     def Update_Positions(self):
+        print 'Update Position'
         for i,dim in enumerate(self.swarm):
             for j,pos in enumerate(dim):
                 self.swarm[i][j] = self.displacement(self.swarm[i][j],self.velocity[i][j])
@@ -302,6 +322,7 @@ class SwarmBPSO:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
 
     def Personal_Best (self):
+        print 'Update Personal Best'
         for i,dim in enumerate(self.pBest):
             for j,pbest in enumerate(dim):
                 indx = ((i)*self.nof_particle)+(j+1)
@@ -313,6 +334,7 @@ class SwarmBPSO:
                     self.pBest[i][j]['fitness'],self.pBest[i][j]['pi'] = self.newFitness[i][j],self.swarm[i][j]
 
     def Global_Best(self):
+        print 'Update Global Best'
         for i,dim in enumerate(self.pBest):
             for j,pbest in enumerate(dim):
                 indx = ((i)*self.nof_particle)+(j+1)
@@ -320,9 +342,9 @@ class SwarmBPSO:
                     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
                 else:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-                if (self.gBest['fitness'] > abs(pbest['fitness'])):
+                if (abs(self.gBest['fitness']) > abs(pbest['fitness'])):
                     self.gBest['fitness'],self.gBest['graph'],self.gBest['pi'] = pbest['fitness'],self.modified_g[i][j],pbest['pi']
-        print 'global best :',self.gBest
+        print 'global best :', abs(self.gBest['fitness'])
         # calculate global best
 
     def fitness(self,graph):
