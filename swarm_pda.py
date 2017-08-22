@@ -6,6 +6,7 @@ import networkx as nx
 import logging
 import matplotlib.pyplot as plt
 import tqdm
+import pylab as pyl
 
 class SwarmPDA():
     rho_plus = []
@@ -86,8 +87,8 @@ class SwarmPDA():
                 while True:
                     bound+=1
                     if  self.rho_minus and  self.rho_plus:
-                        r1 = random.randrange(len(self.rho_plus))
-                        r2 = random.randrange(len(self.rho_plus))
+                        r1 = random.randrange(len(self.rho_plus)) - 1
+                        r2 = random.randrange(len(self.rho_plus)) - 1
                         s1 = self.rho_plus.pop(r1)
                         s2 = self.rho_plus.pop(r2)
                         if s1 != s2:
@@ -169,7 +170,7 @@ class SwarmBPSO:
     rho_plus = []
     dimension = 2
     nof_particle = 3
-    gBest = {'graph':None,'fitness': float('inf')}
+    gBest = {'graph':None,'fitness': 0}
     pBest = []
     newFitness = []
     logging.basicConfig()
@@ -179,8 +180,9 @@ class SwarmBPSO:
     original_f= 0
     velocity = []
     r1 = .2
-    r2 = .3
+    r2 = .6
     r3 = .3
+    _plotPoints = []
 
 
     def __init__(self,original_graph, rho_plus, rho_minus, original_omega_cluster):
@@ -193,6 +195,7 @@ class SwarmBPSO:
 
 
     def initializeSwarm(self):
+        print 'initializing Swarm'
         for i in range(self.dimension):
             positions = []
             graphs = []
@@ -221,7 +224,7 @@ class SwarmBPSO:
         self.original_f = self.fitness(self.original_g)
         print "Original graph Fitness:" , self.original_f
         iter = 0
-        self.gBest['fitness'] = float('inf')
+        self.gBest['fitness'] = 0
         print 'iter -> %i'%iter
         print 'Edge switch:'
         for i,dim in enumerate(self.modified_g):
@@ -251,6 +254,7 @@ class SwarmBPSO:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
             self.newFitness.append(pb)
             self.pBest.append(pbest_list)
+        self._plotPoints.append( (0, self.gBest['fitness']) )
         print 'New Fitness  :',self.newFitness
         # print 'Personal Best' , self.pBest
         self.Global_Best()
@@ -259,7 +263,8 @@ class SwarmBPSO:
             self.Update_Swarm()
             gen = iter+1
             print "Generation", iter+1,"\t-> \tBestFitness:", self.gBest['fitness']
-
+            self._plotPoints.append( (gen, self.gBest['fitness']) )
+        self.plotResults()
 
         # for i in range(generations):
         #     sc.updateSwarm(swarm)
@@ -348,12 +353,14 @@ class SwarmBPSO:
         # calculate global best
 
     def fitness(self,graph):
+        #return random.randrange(1,10000)
         eigenSum = 0
         #closeness = nx.closeness_centrality(graph,701)
-        eigenVector = nx.eigenvector_centrality(graph)
-        for key,value in eigenVector.items():
-            eigenSum+=value
-        return eigenSum
+        eigenVector = nx.closeness_centrality(graph,2828)
+        #for key,value in eigenVector.items():
+        #    eigenSum+=value
+        #return eigenSum
+        return  eigenVector
 
     def edge_switch (self,graph, node1, node2):
         bound =0
@@ -441,7 +448,23 @@ class SwarmBPSO:
                 lambda_tuple.append((fillslot,positionOfMax))
         return lambda_tuple
 
+    def plotResults(self):
+        x = []
+        y = []
+        for (generation, fitness) in self._plotPoints:
+            x.append(generation)
+            y.append(fitness)
 
+#            print "%d" % (fitness)
+        pyl.plot(x, y)
+
+        pyl.grid(True)
+        pyl.title('Swarm PDA')
+        pyl.xlabel('Fitness')
+        pyl.ylabel('Generation (i)')
+        pyl.savefig('swarm_pda_plot')
+
+        pyl.show()
 
 
 
