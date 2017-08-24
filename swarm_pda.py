@@ -170,7 +170,7 @@ class SwarmBPSO:
     rho_plus = []
     dimension = 2
     nof_particle = 3
-    gBest = {'graph':None,'fitness': 0}
+    gBest = {'graph':None,'fitness': float('inf')}
     pBest = []
     newFitness = []
     logging.basicConfig()
@@ -224,7 +224,7 @@ class SwarmBPSO:
         self.original_f = self.fitness(self.original_g)
         print "Original graph Fitness:" , self.original_f
         iter = 0
-        self.gBest['fitness'] = 0
+        self.gBest['fitness'] = float('inf')
         print 'iter -> %i'%iter
         print 'Edge switch:'
         for i,dim in enumerate(self.modified_g):
@@ -261,11 +261,18 @@ class SwarmBPSO:
 
         for iter in range(self.generation):
             self.Update_Swarm()
+            self.Personal_Best()
+            self.Global_Best()
             gen = iter+1
             print "Generation", iter+1,"\t-> \tBestFitness:", self.gBest['fitness']
-            self._plotPoints.append( (gen, self.gBest['fitness']) )
+            self._plotPoints.append( (gen, abs(self.gBest['fitness'])) )
+            self.modified_g = []
+            for i in range(self.dimension):
+                graphs = []
+                for j in range(self.nof_particle):
+                    graphs.append(self.original_g.copy())
+                self.modified_g.append(graphs)
         self.plotResults()
-
         # for i in range(generations):
         #     sc.updateSwarm(swarm)
         #     if swarm._bestPositionFitness < fitness:
@@ -298,8 +305,7 @@ class SwarmBPSO:
                     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
             self.newFitness.append(pb)
         print 'New Fitness: ', self.newFitness
-        self.Personal_Best()
-        self.Global_Best()
+
 
     def Update_Velocity(self):
         for i,dim in enumerate(self.velocity):
@@ -356,11 +362,11 @@ class SwarmBPSO:
         #return random.randrange(1,10000)
         eigenSum = 0
         #closeness = nx.closeness_centrality(graph,701)
-        eigenVector = nx.closeness_centrality(graph,2828)
-        #for key,value in eigenVector.items():
-        #    eigenSum+=value
-        #return eigenSum
-        return  eigenVector
+        eigenVector = nx.eigenvector_centrality(graph)
+        for key,value in eigenVector.items():
+            eigenSum+=value
+        return eigenSum
+        #return  eigenVector
 
     def edge_switch (self,graph, node1, node2):
         bound =0
