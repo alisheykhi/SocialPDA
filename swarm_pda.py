@@ -7,6 +7,8 @@ import logging
 import matplotlib.pyplot as plt
 import tqdm
 import pylab as pyl
+import multiprocessing
+from multiprocessing import Pool
 
 class SwarmPDA():
     rho_plus = []
@@ -159,6 +161,13 @@ class SwarmPDA():
 
 
 
+def fitness(graph):
+    eigenSum = 0
+    #closeness = nx.closeness_centrality(graph,701)
+    eigenVector = nx.eigenvector_centrality(graph)
+    for key,value in eigenVector.items():
+        eigenSum+=value
+    return eigenSum
 
 class SwarmBPSO:
     solution = []
@@ -168,8 +177,8 @@ class SwarmBPSO:
     omega_cluster = []
     rho_minus = []
     rho_plus = []
-    dimension = 2
-    nof_particle = 3
+    dimension = 1
+    nof_particle = 6
     gBest = {'graph':None,'fitness': float('inf')}
     pBest = []
     newFitness = []
@@ -190,8 +199,8 @@ class SwarmBPSO:
         self.omega_cluster = original_omega_cluster
         self.rho_minus = rho_minus
         self.rho_plus = rho_plus
-        print 'from init',len(self.rho_minus)
-        print 'from init',len(self.rho_plus)
+        # print 'from init',len(self.rho_minus)
+        # print 'from init',len(self.rho_plus)
 
 
     def initializeSwarm(self):
@@ -220,42 +229,47 @@ class SwarmBPSO:
                 particle_vel.append(transposition)
             self.velocity.append(particle_vel)
 
-        print "calculate original FF ..."
-        self.original_f = self.fitness(self.original_g)
+        # print "calculate original FF ..."
+        self.original_f = fitness(self.original_g)
         print "Original graph Fitness:" , self.original_f
         iter = 0
         self.gBest['fitness'] = float('inf')
-        print 'iter -> %i'%iter
-        print 'Edge switch:'
+        print 'iter -> %i'%iter,"\t-> \tBestFitness:", self.gBest['fitness']
+        # print 'Edge switch:'
         for i,dim in enumerate(self.modified_g):
             for j,g in enumerate(dim):
-                indx = ((i)*self.nof_particle)+(j+1)
+                # indx = ((i)*self.nof_particle)+(j+1)
                 for k,node in enumerate(self.swarm[i][j]):
                     self.edge_switch(g,node,self.rho_minus[k])
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-        print 'Calculate Fitness '
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+        # print 'Calculate Fitness '
+        for dim in self.modified_g:
+            try:
+                pool = Pool(multiprocessing.cpu_count())
+                data_outputs = pool.map(fitness, dim)
+            finally: # To make sure processes are closed in the end, even if errors happen
+                pool.close()
+                pool.join()
+            self.newFitness.append(data_outputs)
         for i,dim in enumerate(self.modified_g):
-            pb = []
             pbest_list = []
             for j,g in enumerate(dim):
                 init_pbest = {}
-                modified_fitness = self.fitness(g)
-                newfit = self.original_f -  modified_fitness
-                pb.append(newfit)
+                modified_fitness = self.newFitness[i][j]
+                newfit = abs(self.original_f -  modified_fitness)
                 init_pbest['fitness'],init_pbest['pi'] = abs(newfit),self.swarm[i][j]
                 pbest_list.append(init_pbest)
-                indx = ((i)*self.nof_particle)+(j+1)
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-            self.newFitness.append(pb)
+                # indx = ((i)*self.nof_particle)+(j+1)
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
             self.pBest.append(pbest_list)
         self._plotPoints.append( (0, self.gBest['fitness']) )
-        print 'New Fitness  :',self.newFitness
+        # print 'New Fitness  :',self.newFitness
         # print 'Personal Best' , self.pBest
         self.Global_Best()
 
@@ -273,6 +287,7 @@ class SwarmBPSO:
                     graphs.append(self.original_g.copy())
                 self.modified_g.append(graphs)
         self.plotResults()
+        return self.gBest['graph']
         # for i in range(generations):
         #     sc.updateSwarm(swarm)
         #     if swarm._bestPositionFitness < fitness:
@@ -286,25 +301,31 @@ class SwarmBPSO:
         # self.solution = swarm._bestPosition
 
     def Update_Swarm(self):
-        print 'Update Velocity'
+        #print 'Update Velocity'
         self.Update_Velocity()
-        print 'Update Position'
+        #print 'Update Position'
         self.Update_Positions()
-        print 'Update Fitness'
+        #print 'Update Fitness'
         del self.newFitness[:]
+        for dim in self.modified_g:
+            try:
+                pool = Pool(multiprocessing.cpu_count())
+                data_outputs = pool.map(fitness, dim)
+            finally: # To make sure processes are closed in the end, even if errors happen
+                pool.close()
+                pool.join()
+            self.newFitness.append(data_outputs)
         for i,dim in enumerate(self.modified_g):
             pb = []
             for j,g in enumerate(dim):
-                modified_fitness = self.fitness(g)
-                newfit = self.original_f -  modified_fitness
-                pb.append(newfit)
-                indx = ((i)*self.nof_particle)+(j+1)
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
-            self.newFitness.append(pb)
-        print 'New Fitness: ', self.newFitness
+                modified_fitness = self.newFitness[i][j]
+                self.newFitness[i][j] = abs(self.original_f -  modified_fitness)
+                # indx = ((i)*self.nof_particle)+(j+1)
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+        # print 'New Fitness: ',  self.newFitness
 
 
     def Update_Velocity(self):
@@ -320,53 +341,46 @@ class SwarmBPSO:
                 self.velocity[i][j] = v
 
     def Update_Positions(self):
-        print 'Update Position'
+        # print 'Update Position'
         for i,dim in enumerate(self.swarm):
             for j,pos in enumerate(dim):
                 self.swarm[i][j] = self.displacement(self.swarm[i][j],self.velocity[i][j])
-                indx = ((i)*self.nof_particle)+(j+1)
+                # indx = ((i)*self.nof_particle)+(j+1)
                 for k,node in enumerate(self.swarm[i][j]):
                     self.edge_switch(self.modified_g[i][j],node,self.rho_minus[k])
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
 
     def Personal_Best (self):
-        print 'Update Personal Best'
+        # print 'Update Personal Best'
         for i,dim in enumerate(self.pBest):
             for j,pbest in enumerate(dim):
-                indx = ((i)*self.nof_particle)+(j+1)
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                # indx = ((i)*self.nof_particle)+(j+1)
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
                 if (abs(pbest['fitness']) > abs(self.newFitness[i][j])):
                     self.pBest[i][j]['fitness'],self.pBest[i][j]['pi'] = self.newFitness[i][j],self.swarm[i][j]
 
     def Global_Best(self):
-        print 'Update Global Best'
+        # print 'Update Global Best'
         for i,dim in enumerate(self.pBest):
             for j,pbest in enumerate(dim):
-                indx = ((i)*self.nof_particle)+(j+1)
-                if (self.dimension*self.nof_particle) == indx:
-                    print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
-                else:
-                    print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
+                # indx = ((i)*self.nof_particle)+(j+1)
+                # if (self.dimension*self.nof_particle) == indx:
+                #     print '|','-' * (indx+1),'|', indx , '/' ,self.dimension*self.nof_particle
+                # else:
+                #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
                 if (abs(self.gBest['fitness']) > abs(pbest['fitness'])):
                     self.gBest['fitness'],self.gBest['graph'],self.gBest['pi'] = pbest['fitness'],self.modified_g[i][j],pbest['pi']
-        print 'global best :', abs(self.gBest['fitness'])
+        # print 'global best :', abs(self.gBest['fitness'])
         # calculate global best
 
-    def fitness(self,graph):
-        #return random.randrange(1,10000)
-        eigenSum = 0
-        #closeness = nx.closeness_centrality(graph,701)
-        eigenVector = nx.eigenvector_centrality(graph)
-        for key,value in eigenVector.items():
-            eigenSum+=value
-        return eigenSum
-        #return  eigenVector
+    def eigenfitness(self,graph):
+        pass
 
     def edge_switch (self,graph, node1, node2):
         bound =0
@@ -466,10 +480,9 @@ class SwarmBPSO:
 
         pyl.grid(True)
         pyl.title('Swarm PDA')
-        pyl.xlabel('Fitness')
-        pyl.ylabel('Generation (i)')
+        pyl.xlabel('Generation (i)')
+        pyl.ylabel('Fitness')
         pyl.savefig('swarm_pda_plot')
-
         pyl.show()
 
 
