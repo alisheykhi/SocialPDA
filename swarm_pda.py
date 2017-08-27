@@ -1,11 +1,7 @@
 
-import math, random,sys
-import numpy as np
-import scipy.spatial as spp
+import math, random
 import networkx as nx
 import logging
-import matplotlib.pyplot as plt
-import tqdm
 import pylab as pyl
 import multiprocessing
 from multiprocessing import Pool
@@ -159,8 +155,6 @@ class SwarmPDA():
                         node['rho'] += 1
         return True
 
-
-
 def fitness(graph):
     eigenSum = 0
     #closeness = nx.closeness_centrality(graph,701)
@@ -193,7 +187,6 @@ class SwarmBPSO:
     r3 = .3
     _plotPoints = []
 
-
     def __init__(self,original_graph, rho_plus, rho_minus, original_omega_cluster):
         self.original_g = original_graph
         self.omega_cluster = original_omega_cluster
@@ -201,7 +194,6 @@ class SwarmBPSO:
         self.rho_plus = rho_plus
         # print 'from init',len(self.rho_minus)
         # print 'from init',len(self.rho_plus)
-
 
     def initializeSwarm(self):
         print 'initializing Swarm'
@@ -326,7 +318,6 @@ class SwarmBPSO:
                 # else:
                 #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
         # print 'New Fitness: ',  self.newFitness
-
 
     def Update_Velocity(self):
         for i,dim in enumerate(self.velocity):
@@ -485,114 +476,3 @@ class SwarmBPSO:
         pyl.savefig('swarm_pda_plot')
         pyl.show()
 
-
-
-
-
-
-
-
-
-# class ParticleSwarmOptimizer:
-#     solution = []
-#     swarm = []
-#     gBest = []
-#
-#
-#     def __init__(self):
-#         return
-#
-#     def initParticle(self):
-#         for h in range(ParticlePDA.swarmSize):
-#             self.swarm.append(Particle())
-#         self.gBest = self.swarm[0].pBest
-#
-#     def optimize(self):
-#         print ParticlePDA.globalBest
-#
-#         for i in range(ParticlePDA.iterations): # 0 -> iter-1
-#             print self.gBest , self.f(self.gBest)
-#             print "iteration ", i+1 ,"---------------------------"
-#             for j in range(ParticlePDA.swarmSize):
-#                 pBest = self.swarm[j].pBest
-#                 if self.f(pBest) < self.f(self.gBest):
-#                     print "first Global",self.f(self.gBest)
-#                     gBest = pBest
-#                     print "second one",self.f(self.gBest)
-#                     print self.gBest
-#                 #Update position of each paricle
-#                 self.swarm[j].updatePositions(self.gBest)
-#                 #print self.solution,"sol"
-#                 #self.swarm[k].satisfyConstraints()
-#             #Update the personal best positions
-#                 if self.f(self.swarm[j].pos) < self.f(self.swarm[j].pBest):
-#                     self.swarm[j].pBest = self.swarm[l].pos
-#
-#         return self.solution
-#
-#     def f(self, particle):
-#         return ((ParticlePDA.beta * self.f1(particle) )+((1-ParticlePDA.beta) * self.f2(particle)))
-#
-#     def f2(self,particle):
-#         sumarray =[]
-#         i = 0
-#         for x in particle:
-#             diff =0
-#             for node in ParticlePDA.omega_cluster[i]:
-#                 if x:
-#                     diff += node['degree'] - math.ceil((ParticlePDA.avg_clusters[i]['avg']))
-#                 else:
-#                     diff += node['degree'] - math.floor((ParticlePDA.avg_clusters[i]['avg']))
-#             i += 1
-#             sumarray.append(diff)
-#         return math.fabs(sum(sumarray))
-#
-#     def f1(self,particle):
-#         sumarray =[]
-#         i = 0
-#         for x in particle:
-#             diff =0
-#             for node in ParticlePDA.omega_cluster[i]:
-#                 if x:
-#                     diff += math.fabs(node['degree'] - math.ceil((ParticlePDA.avg_clusters[i]['avg'])))
-#                 else:
-#                     diff +=math.fabs(node['degree'] - math.floor((ParticlePDA.avg_clusters[i]['avg'])))
-#             i += 1
-#             sumarray.append(diff)
-#         return (sum(sumarray))
-#     # This class contains the particle swarm optimization algorithm
-#
-# class Particle:
-#
-#     def __init__(self):
-#         self.pos = np.random.randint(2, size = ParticlePDA.dimension)
-#         self.velocity = np.random.ranf(size=ParticlePDA.dimension)
-#         self.pBest = self.pos
-#
-#         # self.pos = np.random.randint(2, size = ParticlePDA.dimension)
-#         # self.velocity = np.random.ranf(size=ParticlePDA.dimension)
-#
-#     def updatePositions(self, gBest):
-#         for i in range(ParticlePDA.dimension):
-#             r1 = random.random()
-#             r2 = random.random()
-#             social = float(ParticlePDA.c1 * r1 * (gBest[i] - self.pos[i]))
-#             cognitive = float(ParticlePDA.c2 * r2 * (self.pBest[i] - self.pos[i]))
-#             velocity = social + cognitive
-#             if abs(velocity) > ParticlePDA.vmax and abs(velocity) is velocity:
-#                 velocity = ParticlePDA.vmax
-#             elif abs(velocity) > ParticlePDA.vmax:
-#                 velocity = -ParticlePDA.vmax
-#             self.velocity[i] =  velocity #+ (ParticlePDA.w * self.velocity[i])
-#             if np.random.rand(1) < self.sigmoid(self.velocity[i]):
-#                 self.pos[i] = 0
-#             else:
-#                 self.pos[i] = 1
-#         return
-#
-#     def sigmoid (self, x):
-#         return 1 / (1+ math.exp(-x))
-#
-#     def satisfyConstraints(self):
-#         #This is where constraints are satisfied
-#         return
