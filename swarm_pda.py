@@ -5,6 +5,7 @@ import logging
 import pylab as pyl
 import multiprocessing
 from multiprocessing import Pool
+#from pathos.multiprocessing import ProcessingPool as Pool
 
 class SwarmPDA():
     rho_plus = []
@@ -62,8 +63,8 @@ class SwarmPDA():
                 bound = 0
                 while True:
                     bound+=1
-                    r1 = random.randrange(len(self.rho_minus))
-                    r2 = random.randrange(len(self.rho_minus))
+                    r1 = random.randrange(len(self.rho_minus)) -1
+                    r2 = random.randrange(len(self.rho_minus)) -1
                     s1 = self.rho_minus.pop(r1)
                     s2 = self.rho_minus.pop(r2)
                     if s1 != s2:
@@ -104,21 +105,20 @@ class SwarmPDA():
         swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
         swarmPSO.initializeSwarm()
 
-
     def edge_removal (self, node1, node2):
         bound = 0
         neighbors1,neighbors2,neighbor1,neighbor2 = None,None,None,None
         if self.modified_graph.degree(node1)==self.modified_graph.degree(node1)==1\
-                or node2 in self.modified_graph.neighbors(node1)\
+                or node2 in list(self.modified_graph.neighbors(node1))\
                 or node1 == node2:
             self.logger.warning('edge removal failed node1 = %s , node2= %s' % (node1,node2))
             return False
         while True:
             bound +=1
-            neighbors1 = self.modified_graph.neighbors(node1)
+            neighbors1 = list(self.modified_graph.neighbors(node1))
             neighbor1 = random.choice(neighbors1)
             neighbors1.remove(neighbor1)
-            neighbors2 = self.modified_graph.neighbors(node2)
+            neighbors2 = list(self.modified_graph.neighbors(node2))
             neighbor2 = random.choice(neighbors2)
             neighbors2.remove(neighbor2)
             if not self.modified_graph.has_edge(neighbor1,neighbor2)\
@@ -143,7 +143,7 @@ class SwarmPDA():
             return False
 
     def edge_add (self, node1, node2):
-        if node1 in self.modified_graph.neighbors(node2) or node1 == node2:
+        if node1 in list(self.modified_graph.neighbors(node2)) or node1 == node2:
             self.logger.warning('edge add failed node1 = %s , node2= %s' % (node1,node2))
             return False
         else:
@@ -155,7 +155,12 @@ class SwarmPDA():
                         node['rho'] += 1
         return True
 
-def fitness(graph):
+
+
+# def unwrap_self_fitness(arg, **kwarg):
+#     return SwarmBPSO.fitness(*arg, **kwarg)
+
+def fitness( graph):
     eigenSum = 0
     #closeness = nx.closeness_centrality(graph,701)
     eigenVector = nx.eigenvector_centrality(graph)
@@ -171,8 +176,8 @@ class SwarmBPSO:
     omega_cluster = []
     rho_minus = []
     rho_plus = []
-    dimension = 1
-    nof_particle = 6
+    dimension = 2
+    nof_particle = 3
     gBest = {'graph':None,'fitness': float('inf')}
     pBest = []
     newFitness = []
@@ -194,6 +199,7 @@ class SwarmBPSO:
         self.rho_plus = rho_plus
         # print 'from init',len(self.rho_minus)
         # print 'from init',len(self.rho_plus)
+
 
     def initializeSwarm(self):
         print 'initializing Swarm'
@@ -221,7 +227,7 @@ class SwarmBPSO:
                 particle_vel.append(transposition)
             self.velocity.append(particle_vel)
 
-        # print "calculate original FF ..."
+        print "calculate original FF ..."
         self.original_f = fitness(self.original_g)
         print "Original graph Fitness:" , self.original_f
         iter = 0
@@ -241,6 +247,7 @@ class SwarmBPSO:
         for dim in self.modified_g:
             try:
                 pool = Pool(multiprocessing.cpu_count())
+                #data_outputs = pool.map(fitness, dim)
                 data_outputs = pool.map(fitness, dim)
             finally: # To make sure processes are closed in the end, even if errors happen
                 pool.close()
@@ -291,6 +298,8 @@ class SwarmBPSO:
         #     print "Generation", i+1,"\t-> BestPos:", swarm._bestPosition, \
         #         "\tBestFitness:", swarm._bestPositionFitness
         # self.solution = swarm._bestPosition
+
+
 
     def Update_Swarm(self):
         #print 'Update Velocity'
@@ -380,13 +389,13 @@ class SwarmBPSO:
             return False
         else:
 
-            neighbors1 =graph.neighbors(node1)
-            neighbors2 = graph.neighbors(node2)
+            neighbors1 = list(graph.neighbors(node1))
+            neighbors2 = list(graph.neighbors(node2))
             while True:
                 bound+=1
                 try:
                     pivot = (0,float('inf'))
-                    for node in graph.degree_iter(neighbors1):
+                    for node in graph.degree(neighbors1):
                         if node[1] < pivot[1]:
                             pivot = node
                 except:
@@ -399,7 +408,7 @@ class SwarmBPSO:
                 neighbors1.remove(pivot[0])
                 if pivot[0] not in neighbors2 and pivot[0] != node1:
                     break
-                if bound > (len(graph.neighbors(node1))+5):
+                if bound > (len(list(graph.neighbors(node1)))+5):
                     self.logger.warning('there is no pivot node for edge switch, try 50 times. node1=%d,node2=%d'%(node1,node2))
                     break
 

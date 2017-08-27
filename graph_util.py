@@ -103,7 +103,7 @@ class ReadGraph():
 
                 sum = 0
                 count = 0
-                for NI in ReadGraph.G.degree().values():
+                for N,NI in ReadGraph.G.degree():
                     #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
                     sum += NI
                     count+=1
@@ -152,7 +152,7 @@ class ReadGraph():
 
                 sum = 0
                 count = 0
-                for NI in ReadGraph.G.degree().values():
+                for N,NI in ReadGraph.G.degree():
                     #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
                     sum += NI
                     count+=1
@@ -161,7 +161,7 @@ class ReadGraph():
                 self.degree_sequence()
 
     def degree_sequence(self):
-        result_in_degree = ReadGraph.G.degree().values()
+        result_in_degree = [y for x,y in ReadGraph.G.degree()]
         privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
         privacy_level = privacy_level_generator(file_name=privacy_file_name)
         for node in ReadGraph.G.nodes():
