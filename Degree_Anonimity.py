@@ -13,3 +13,7 @@ particle_pda = ParticlePDA(omega_clusters=optimal_omega_cluster.omega_clusters,b
 #particle_pda.plotResults()
 anonymizedcluster = particle_pda.clusterWithAvg()
 swarm_pda = SwarmPDA(omega_clusters=particle_pda.clusters_avg_embedded,graph_G= graph_caida.G)
+sol = swarm_pda.run_swarm()
+print "after swarmPDA"
+print sol['modified'],sol['original']
+print "dict: ", sol

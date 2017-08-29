@@ -9,6 +9,9 @@ import tqdm
 import pylab as pyl
 import multiprocessing
 from multiprocessing import Pool
+from harmonic_centrality import harmonic_centrality
+from networkx_viewer import Viewer
+from matplotlib import pylab
 
 class SwarmPDA():
     rho_plus = []
@@ -105,9 +108,11 @@ class SwarmPDA():
                             logging.error('failed to add edge %d,%d'%(s1,s2))
                             break
 
-        swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
-        swarmPSO.initializeSwarm()
 
+    def run_swarm(self):
+        swarmPSO = SwarmBPSO (self.modified_graph, self.rho_plus, self.rho_minus, self.modified_omega_clusters)
+        solution =  swarmPSO.initializeSwarm()
+        return solution
 
     def edge_removal (self, node1, node2):
         bound = 0
@@ -162,12 +167,18 @@ class SwarmPDA():
 
 
 def fitness(graph):
-    eigenSum = 0
-    #closeness = nx.closeness_centrality(graph,701)
-    eigenVector = nx.eigenvector_centrality(graph)
-    for key,value in eigenVector.items():
-        eigenSum+=value
-    return eigenSum
+    harmonicSum = 0
+    harmonic = harmonic_centrality(graph)
+    for key,value in harmonic.iteritems():
+        harmonicSum += value
+    return harmonicSum
+    #
+    # eigenSum = 0
+    # #closeness = nx.closeness_centrality(graph,701)
+    # eigenVector = nx.eigenvector_centrality(graph)
+    # for key,value in eigenVector.items():
+    #     eigenSum+=value
+    # return eigenSum
 
 class SwarmBPSO:
     solution = []
@@ -185,7 +196,7 @@ class SwarmBPSO:
     logging.basicConfig()
     logger = logging.getLogger('SwarmBPSO')
     node_change = []
-    generation =10
+    generation =1
     original_f= 0
     velocity = []
     r1 = .2
@@ -287,7 +298,10 @@ class SwarmBPSO:
                     graphs.append(self.original_g.copy())
                 self.modified_g.append(graphs)
         self.plotResults()
-        return self.gBest['graph']
+        #nx.write_graphml(self.gBest['graph'],'result.graphml')
+        #self.save_graph(self.gBest['graph'],"result.pdf")
+        sol = {'modified' : self.gBest['graph'],'original' : self.original_g}
+        return  sol
         # for i in range(generations):
         #     sc.updateSwarm(swarm)
         #     if swarm._bestPositionFitness < fitness:
@@ -326,7 +340,6 @@ class SwarmBPSO:
                 # else:
                 #     print '|','-' * indx,' ' * ((self.dimension*self.nof_particle)- indx),'|',indx , '/' ,self.dimension*self.nof_particle
         # print 'New Fitness: ',  self.newFitness
-
 
     def Update_Velocity(self):
         for i,dim in enumerate(self.velocity):
@@ -484,6 +497,26 @@ class SwarmBPSO:
         pyl.ylabel('Fitness')
         pyl.savefig('swarm_pda_plot')
         pyl.show()
+
+    def save_graph(self,graph,file_name):
+        #initialze Figure
+        plt.figure(num=None, figsize=(20, 20), dpi=80)
+        plt.axis('off')
+        fig = plt.figure(1)
+        pos = nx.spring_layout(graph)
+        nx.draw_networkx_nodes(graph,pos)
+        nx.draw_networkx_edges(graph,pos)
+        nx.draw_networkx_labels(graph,pos)
+
+        cut = 1.00
+        xmax = cut * max(xx for xx, yy in pos.values())
+        ymax = cut * max(yy for xx, yy in pos.values())
+        plt.xlim(0, xmax)
+        plt.ylim(0, ymax)
+
+        plt.savefig(file_name,bbox_inches="tight")
+        pylab.close()
+        del fig
 
 
 
