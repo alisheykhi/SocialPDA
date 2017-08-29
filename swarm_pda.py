@@ -297,10 +297,12 @@ class SwarmBPSO:
                 for j in range(self.nof_particle):
                     graphs.append(self.original_g.copy())
                 self.modified_g.append(graphs)
-        self.plotResults()
+        #self.plotResults()
         #nx.write_graphml(self.gBest['graph'],'result.graphml')
         #self.save_graph(self.gBest['graph'],"result.pdf")
-        sol = {'modified' : self.gBest['graph'],'original' : self.original_g}
+        sol = {}
+        sol['modified'] = self.gBest['graph']
+        sol['original'] = self.original_g
         return  sol
         # for i in range(generations):
         #     sc.updateSwarm(swarm)
