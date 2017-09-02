@@ -6,7 +6,7 @@ from Measurments import measurmnets
 
 #graph_blogs = ReadGraph("polblogs.gml")
 #graph_books = ReadGraph("polbooks.gml")
-graph_caida = ReadGraph("caida.txt",'1_5')
+graph_caida = ReadGraph("caida.txt")
 optimal_omega_cluster = MicroPDA(graph_caida.sorted_degree_sequence)
 particle_pda = ParticlePDA(omega_clusters=optimal_omega_cluster.omega_clusters,beta= 0.99,
                            removed_omega_clusters=optimal_omega_cluster.removed_omega_clusters)
