@@ -39,9 +39,9 @@ class ParticlePDA():
                 self.clusters_avg_embedded.append(cluster)
 
 
-        self._popSize = popSize = 50
+        self._popSize = popSize = 100
         self._dimensions = dimensions  = len(self.clusters)
-        self._generations = generations = 10
+        self._generations = generations = 20
         print " particle dimension:",dimensions
         print "\nBinary PSO output:"
         swarm   = SwarmModel()

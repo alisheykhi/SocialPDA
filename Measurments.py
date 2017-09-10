@@ -29,7 +29,6 @@ class measurmnets:
         self.measure['t_o'] = self.transitivity(self.original_graph)
         # self.measure['t_m'] = self.transitivity(self.modified_graph)
         # self.measure['t_s'] = self.transitivity(self.sol_graph)
-
         return self.measure
 
     def harmonic_mean(self,graph):

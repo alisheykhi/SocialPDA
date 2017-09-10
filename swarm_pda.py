@@ -190,14 +190,14 @@ class SwarmBPSO:
     rho_minus = []
     rho_plus = []
     dimension = 1
-    nof_particle = 6
+    nof_particle = 100
     gBest = {'graph':None,'fitness': float('inf')}
     pBest = []
     newFitness = []
     logging.basicConfig()
     logger = logging.getLogger('SwarmBPSO')
     node_change = []
-    generation =1
+    generation =20
     original_f= 0
     velocity = []
     r1 = .2
