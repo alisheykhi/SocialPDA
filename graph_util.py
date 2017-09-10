@@ -77,40 +77,51 @@ class ReadGraph():
         convert gml graph to TUNGraph
         :return:
         '''
-
         try:
             file_path = "DataSet/"+self.file_name
-            ifile = open(file_path,'r')
         except:
             print "can't open "+self.file_name
         else:
-            text = ifile.read()
-            ifile.close()
-            if text:
-                print "reading gml file ... "
-                pattern_meas = re.compile(r"source\s(\d+)\s+target\s(\d+)", re.VERBOSE | re.MULTILINE)
-                pattern_id = re.compile(r"id\s(\d+)", re.VERBOSE | re.MULTILINE)
-                for match in pattern_meas.finditer(text):
-                    ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
-                for match in pattern_id.finditer(text):
-                    ReadGraph.nodes.append("%s" % match.group(1))
-                node_count = 0
-                for node in ReadGraph.nodes:
-                    ReadGraph.G.add_node(int(node))
-                    node_count += 1
-                for edge in ReadGraph.edges:
-                    ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
-
-                sum = 0
-                count = 0
-                for NI in ReadGraph.G.degree().values():
-                    #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
-                    sum += NI
-                    count+=1
-
-                ReadGraph.properties ['edge_count'] = sum/2
-
-                self.degree_sequence()
+            print "reading gml file ... "
+            M = nx.MultiGraph(nx.read_gml('DataSet/polblogs.gml'))
+            for u,v,data in M.edges_iter(data=True):
+                if ReadGraph.G.has_edge(u,v):
+                    pass
+                else:
+                    ReadGraph.G.add_edge(u, v)
+            ReadGraph.properties ['edge_count'] = len(ReadGraph.edges)
+            print len(ReadGraph.G.node)
+            self.degree_sequence()
+        # try:
+        #     file_path = "DataSet/"+self.file_name
+        #     ifile = open(file_path,'r')
+        # except:
+        #     print "can't open "+self.file_name
+        # else:
+        #     text = ifile.read()
+        #     ifile.close()
+        #     if text:
+        #         print "reading gml file ... "
+        #         pattern_meas = re.compile(r"source\s(\d+)\s+target\s(\d+)", re.VERBOSE | re.MULTILINE)
+        #         pattern_id = re.compile(r"id\s(\d+)", re.VERBOSE | re.MULTILINE)
+        #         for match in pattern_meas.finditer(text):
+        #             ReadGraph.edges.append("%s,%s" % (match.group(1), match.group(2)))
+        #         for match in pattern_id.finditer(text):
+        #             ReadGraph.nodes.append("%s" % match.group(1))
+        #         node_count = 0
+        #         for node in ReadGraph.nodes:
+        #             ReadGraph.G.add_node(int(node))
+        #             node_count += 1
+        #         for edge in ReadGraph.edges:
+        #             ReadGraph.G.add_edge(int(edge.split(",")[0]) ,int( edge.split(",")[1]))
+        #         sum = 0
+        #         count = 0
+        #         for NI in ReadGraph.G.degree().values():
+        #             #print "node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg())
+        #             sum += NI
+        #             count+=1
+        #         ReadGraph.properties ['edge_count'] = sum/2
+        #         self.degree_sequence()
 
 
     def txt_to_graph(self):
