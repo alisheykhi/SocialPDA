@@ -13,7 +13,7 @@ class ReadGraph():
     privacy_level = []
     sorted_degree_sequence = []
 
-    def __init__(self, file_name):
+    def __init__(self, file_name,level):
         print "-----------------------------------------------------------"
         print "___________________Developed for___________________________"
         print "-----------------------------------------------------------"
@@ -27,11 +27,11 @@ class ReadGraph():
         self.file_name = file_name
         print "file name : ",self.file_name
         ReadGraph.extension = ["csv", "txt", "gml", "net"]
-        self.converter()
+        self.converter(level)
 
 
 
-    def converter(self):
+    def converter(self,level):
         '''
         chose correct converter
         :return:
@@ -40,10 +40,10 @@ class ReadGraph():
 
         if file_type == "gml":
             print "Convert gml file ... "
-            self.gml_to_graph()
+            self.gml_to_graph(level)
         if file_type == "txt":
             print "Convert txt file ... "
-            self.txt_to_graph()
+            self.txt_to_graph(level)
 
 
     def file_type(self):
@@ -72,7 +72,7 @@ class ReadGraph():
             return False
 
 
-    def gml_to_graph(self):
+    def gml_to_graph(self,level):
         '''
         convert gml graph to TUNGraph
         :return:
@@ -121,10 +121,10 @@ class ReadGraph():
                     sum += NI
                     count+=1
                 ReadGraph.properties ['edge_count'] = sum/2
-                self.degree_sequence()
+                self.degree_sequence(level)
 
 
-    def txt_to_graph(self):
+    def txt_to_graph(self,level):
         """
         convert txt graph to TNUGraph
         :return:
@@ -169,24 +169,32 @@ class ReadGraph():
                     count+=1
                 ReadGraph.properties ['edge_count'] = sum/2
 
-                self.degree_sequence()
+                self.degree_sequence(level)
 
-    def degree_sequence(self):
+    def degree_sequence(self,level):
         print nx.info(ReadGraph.G)
         result_in_degree = ReadGraph.G.degree().values()
         privacy_file_name = self.file_name.split(".")[0]+"_privacy.txt"
-        privacy_level = privacy_level_generator(file_name=privacy_file_name)
+        privacy_level = privacy_level_generator(file_name=privacy_file_name,lvl =level)
+        # departed = []
         for node in ReadGraph.G.nodes():
             if ReadGraph.G.degree(node):
                 current_node = dict(degree = ReadGraph.G.degree(node), id=node)
                 ReadGraph.sorted_degree_sequence.append(current_node)
+        #         if ReadGraph.G.degree(node) == 1:
+        #             departed.append(list(ReadGraph.G.edges_iter(node))[0])
+        # for item in departed:
+        #     for item2 in departed:
+        #         if item[1] == item2[0]:
+        #             print item, item2
+
         ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['degree']), reverse=True)
 
         # for i in range (0,5):
         #     print ReadGraph.sorted_degree_sequence[i]
         for i in range(0, len(ReadGraph.sorted_degree_sequence)):
             if ReadGraph.sorted_degree_sequence[i]:
-                ReadGraph.sorted_degree_sequence[i]['privacy_level'] = int(privacy_level[i])*2
+                ReadGraph.sorted_degree_sequence[i]['privacy_level'] = int(privacy_level[i])
         #ReadGraph.sorted_degree_sequence.sort(key=lambda x:(x['privacy_level'],x['degree']), reverse=True)
         ReadGraph.properties['node_count'] = len(ReadGraph.sorted_degree_sequence)
         max_degree = None

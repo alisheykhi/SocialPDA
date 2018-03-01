@@ -42,7 +42,10 @@ class BinaryParticleController:
             model._fitness = hdist
 
     def f(self, particle):
-        return ((self._beta * self.f1(particle) )+((1-self._beta) * self.f2(particle)))
+        f1 = self.f1(particle)
+        f2 = self.f2(particle)
+        print "f1 = ", f1, "f2 = ", f2
+        return ((self._beta * f1)+((1-self._beta) * f2))
 
     def f2(self,particle):
         sumarray =[]

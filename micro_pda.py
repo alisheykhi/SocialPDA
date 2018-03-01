@@ -1,4 +1,5 @@
 import networkx as nx
+import matplotlib.pyplot as plt
 
 class MicroPDA():
     g_phi = nx.DiGraph()
@@ -10,13 +11,20 @@ class MicroPDA():
         print "-----------------------------------------------------------"
         print "____________________MicroPDA_______________________________"
         print "-----------------------------------------------------------"
+
         for i in range (0,len(sorted_degree_sequence)):
             sorted_degree_sequence[i]['index']=i+1
+            if sorted_degree_sequence[i]['degree'] ==1:
+                pass#print sorted_degree_sequence[i]
         # add node_zero or phi_0
         node_zero = dict(degree=0, id=-1, privacy_level=0 , index = 0)
         sorted_degree_sequence.insert(0,node_zero)
         #print len(degree)
+        print len(sorted_degree_sequence)
+        print sorted_degree_sequence[0]
+        print sorted_degree_sequence [-1]
         self.find_shortest_path(sorted_degree_sequence)
+
 
     def find_shortest_path (self,degree):
 
@@ -32,11 +40,14 @@ class MicroPDA():
                     weight += ((int(degree[id]['degree'])- mu) ** 2)
                 MicroPDA.g_phi.add_edge(i,j,weight=weight)
                 j += 1
-        MicroPDA.shortest_path = nx.dijkstra_path(MicroPDA.g_phi,source=0,target=int(degree[-1]['index']))
-        #print "shortest path is:",MicroPDA.shortest_path
 
-        print "number of Omega Clusters: " + str(len(MicroPDA.shortest_path)-1)
-        print "\n pruning:"
+        MicroPDA.shortest_path = nx.dijkstra_path(MicroPDA.g_phi,source=0,target=int(degree[-1]['index']))
+
+
+        # print "shortest path is:",MicroPDA.shortest_path
+        #
+        # print "number of Omega Clusters: " + str(len(MicroPDA.shortest_path)-1)
+        # print "\n pruning:"
         for index in range(0,len(MicroPDA.shortest_path)-1):
             lb = int (MicroPDA.shortest_path[index])
             ub = int (MicroPDA.shortest_path[index+1])
@@ -53,16 +64,24 @@ class MicroPDA():
                 min_degree = min(min_degree, node['degree'])
             if (max_degree-min_degree) >200: #threshold
                 self.removed_omega_clusters.append(omega_cluster)
-                print "difference between max degree and min degree in omega cluster %d is: %d" %(omega_cluster[1]['omega_cluster_index'],max_degree-min_degree)
+                # print "difference between max degree and min degree in omega cluster %d is: %d" %(omega_cluster[1]['omega_cluster_index'],max_degree-min_degree)
             else:
                 MicroPDA.omega_clusters.append(omega_cluster)
-        print "\nfirst 10 omega cluster :"
-        for z in range(0,10):
-            print MicroPDA.omega_clusters[z]
-        print "\nlast 10 omega cluster: "
-        for z in range(len(MicroPDA.omega_clusters)-10,len(MicroPDA.omega_clusters)):
-            print MicroPDA.omega_clusters[z]
-        print "-----------------------------------------------------------"
+
+        # print "\nfirst 10 omega cluster :"
+        # for z in range(0,10):
+        #     try :
+        #         print MicroPDA.omega_clusters[z]
+        #     except:
+        #         pass
+        # print "\nlast 10 omega cluster: "
+        # for z in range(len(MicroPDA.omega_clusters)-10,len(MicroPDA.omega_clusters)):
+        #     try :
+        #         print MicroPDA.omega_clusters[z]
+        #     except:
+        #         pass
+        # print "-----------------------------------------------------------"
+
 
 
 
